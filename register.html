@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register — Where Do I Go From Here?</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --cognac: #8B4513;
+    --cognac-deep: #6B3410;
+    --ivory: #FAF3E0;
+    --ivory-dark: #EFE7CC;
+    --forest: #2D4A2D;
+    --gold: #C9A84C;
+    --espresso: #2C1A0E;
+    --espresso-soft: #3D2415;
+    --text-muted: rgba(44,26,14,0.5);
+  }
+
+  html, body {
+    min-height: 100vh;
+    font-family: 'Cormorant Garamond', serif;
+    background: var(--espresso);
+    color: var(--espresso);
+  }
+
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 16px;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: -200px; right: -200px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(201,168,76,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -200px; left: -200px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(139,69,19,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 520px;
+    background: var(--ivory);
+    box-shadow: 0 60px 120px rgba(0,0,0,0.5);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .card::before {
+    content: '';
+    display: block;
+    height: 4px;
+    background: linear-gradient(90deg, var(--cognac), var(--gold), var(--cognac));
+  }
+
+  .progress-track {
+    height: 2px;
+    background: var(--ivory-dark);
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--forest);
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 0%;
+  }
+
+  .step-counter {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 36px 0;
+  }
+
+  .step-label {
+    font-size: 10px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .step-dots { display: flex; gap: 6px; }
+
+  .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--ivory-dark);
+    transition: all 0.3s ease;
+  }
+  .dot.active { background: var(--cognac); transform: scale(1.2); }
+  .dot.done   { background: var(--forest); }
+
+  .card-body { padding: 28px 36px 36px; }
+
+  .step { display: none; animation: fadeSlide 0.4s ease forwards; }
+  .step.active { display: block; }
+
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateX(18px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+
+  /* Welcome */
+  .welcome-tag {
+    display: inline-block;
+    font-size: 10px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--cognac);
+    border: 1px solid var(--cognac);
+    padding: 4px 12px;
+    margin-bottom: 20px;
+    font-weight: 600;
+  }
+
+  .welcome-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 36px;
+    font-weight: 900;
+    color: var(--espresso);
+    line-height: 1.05;
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+  }
+  .welcome-title em { color: var(--cognac); font-style: italic; }
+
+  .welcome-sub {
+    font-size: 15px;
+    color: var(--espresso-soft);
+    line-height: 1.6;
+    margin-bottom: 22px;
+    font-style: italic;
+    font-weight: 300;
+  }
+
+  .event-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 22px;
+  }
+
+  .pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--ivory-dark);
+    padding: 7px 14px;
+    font-size: 12.5px;
+    color: var(--espresso);
+    font-weight: 500;
+  }
+  .pill strong { color: var(--cognac); font-weight: 600; }
+
+  .welcome-note {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    border-left: 2px solid var(--gold);
+    padding-left: 14px;
+    margin-bottom: 26px;
+  }
+
+  /* Questions */
+  .q-label {
+    font-size: 10px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--cognac);
+    font-weight: 600;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .q-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--espresso);
+    line-height: 1.3;
+    margin-bottom: 6px;
+  }
+
+  .q-sub {
+    font-size: 13.5px;
+    color: var(--text-muted);
+    font-style: italic;
+    margin-bottom: 22px;
+    line-height: 1.5;
+  }
+
+  /* Inputs */
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  textarea {
+    width: 100%;
+    background: white;
+    border: 1.5px solid var(--ivory-dark);
+    padding: 14px 16px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    color: var(--espresso);
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 0;
+    -webkit-appearance: none;
+    margin-bottom: 6px;
+  }
+
+  input::placeholder, textarea::placeholder {
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  input:focus, textarea:focus {
+    border-color: var(--cognac);
+    box-shadow: 0 0 0 3px rgba(139,69,19,0.08);
+  }
+
+  textarea { resize: none; height: 100px; line-height: 1.5; }
+
+  .input-error {
+    font-size: 12px;
+    color: #b03a2e;
+    margin-bottom: 4px;
+    display: none;
+    font-style: italic;
+  }
+  .input-error.show { display: block; }
+
+  /* Options */
+  .options-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 4px; }
+
+  .option-btn {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 18px;
+    background: white;
+    border: 1.5px solid var(--ivory-dark);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+    font-family: 'Cormorant Garamond', serif;
+    width: 100%;
+  }
+
+  .option-btn:hover { border-color: var(--cognac); background: rgba(139,69,19,0.03); }
+  .option-btn.selected { border-color: var(--cognac); background: rgba(139,69,19,0.06); }
+
+  .option-radio {
+    width: 18px; height: 18px;
+    border: 1.5px solid var(--ivory-dark);
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+  }
+
+  .option-btn.selected .option-radio {
+    border-color: var(--cognac);
+    background: var(--cognac);
+  }
+
+  .option-btn.selected .option-radio::after {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: white;
+  }
+
+  .option-text {
+    font-size: 15px;
+    color: var(--espresso);
+    line-height: 1.4;
+    font-weight: 400;
+  }
+
+  .option-btn.selected .option-text { color: var(--cognac); font-weight: 500; }
+
+  /* Buttons */
+  .btn-primary {
+    width: 100%;
+    padding: 16px;
+    background: var(--cognac);
+    color: var(--ivory);
+    border: none;
+    cursor: pointer;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    transition: background 0.2s ease, transform 0.1s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+  }
+
+  .btn-primary:hover { background: var(--cognac-deep); }
+  .btn-primary:active { transform: scale(0.99); }
+
+  .btn-primary .arrow { font-size: 18px; transition: transform 0.2s ease; }
+  .btn-primary:hover .arrow { transform: translateX(4px); }
+
+  .btn-back {
+    background: none;
+    border: none;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 13px;
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 14px;
+    padding: 0;
+    transition: color 0.2s;
+  }
+  .btn-back:hover { color: var(--espresso); }
+
+  /* Success */
+  .success-icon {
+    width: 56px; height: 56px;
+    background: var(--forest);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+
+  .success-icon svg {
+    width: 26px; height: 26px;
+    stroke: var(--ivory);
+    fill: none;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .success-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--espresso);
+    line-height: 1.1;
+    margin-bottom: 10px;
+  }
+  .success-title em { color: var(--cognac); font-style: italic; }
+
+  .success-body {
+    font-size: 15px;
+    color: var(--espresso-soft);
+    line-height: 1.7;
+    margin-bottom: 22px;
+  }
+
+  .success-details {
+    background: var(--ivory-dark);
+    padding: 16px 18px;
+    margin-bottom: 24px;
+  }
+
+  .success-details p {
+    font-size: 13.5px;
+    color: var(--espresso);
+    line-height: 1.6;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .success-details p + p { margin-top: 8px; }
+  .success-details span { color: var(--cognac); font-weight: 600; }
+
+  .btn-whatsapp {
+    width: 100%;
+    padding: 16px;
+    background: #25D366;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    text-decoration: none;
+    transition: background 0.2s ease;
+  }
+  .btn-whatsapp:hover { background: #1ebe5a; }
+
+  .whatsapp-note {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 12px;
+    font-style: italic;
+    line-height: 1.5;
+  }
+
+  .card-footer {
+    padding: 14px 36px 20px;
+    border-top: 1px solid var(--ivory-dark);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .brand-name {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  .brand-tag {
+    font-size: 10px;
+    color: var(--gold);
+    font-style: italic;
+    font-family: 'Cormorant Garamond', serif;
+  }
+
+  @media (max-width: 480px) {
+    .card-body { padding: 24px 24px 30px; }
+    .step-counter { padding: 14px 24px 0; }
+    .card-footer { padding: 14px 24px 18px; }
+    .welcome-title { font-size: 30px; }
+    .q-title { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="progress-track">
+    <div class="progress-fill" id="progressFill"></div>
+  </div>
+
+  <div class="step-counter">
+    <span class="step-label" id="stepLabel">Welcome</span>
+    <div class="step-dots" id="stepDots"></div>
+  </div>
+
+  <div class="card-body">
+
+    <!-- STEP 0: Welcome -->
+    <div class="step active" id="step-0">
+      <div class="welcome-tag">The Revolutionary Educator</div>
+      <div class="welcome-title">Where Do I Go<br><em>From Here?</em></div>
+      <div class="welcome-sub">A free virtual program + book launch — May 8th, 7PM WAT on Telegram</div>
+      <div class="event-pills">
+        <div class="pill">📅 <strong>May 8th, 2025</strong></div>
+        <div class="pill">🕖 <strong>7:00 PM WAT</strong></div>
+        <div class="pill">📍 <strong>Telegram</strong></div>
+        <div class="pill">🎁 <strong>Free + Free Book</strong></div>
+      </div>
+      <div class="welcome-note">
+        Takes less than 2 minutes. A few honest questions so I know who is coming and what you need most. Your answers go directly to me.
+      </div>
+      <button class="btn-primary" onclick="nextStep()">
+        Let's go <span class="arrow">→</span>
+      </button>
+    </div>
+
+    <!-- STEP 1: Name -->
+    <div class="step" id="step-1">
+      <span class="q-label">First things first</span>
+      <div class="q-title">What do I call you?</div>
+      <div class="q-sub">Your first name is enough.</div>
+      <input type="text" id="inputName" placeholder="Your name..." autocomplete="given-name" />
+      <div class="input-error" id="errorName">Please tell me your name so I know who I'm talking to.</div>
+      <button class="btn-primary" onclick="validateText('inputName','errorName','name')">
+        Continue <span class="arrow">→</span>
+      </button>
+      <button class="btn-back" onclick="prevStep()">← Go back</button>
+    </div>
+
+    <!-- STEP 2: Phone -->
+    <div class="step" id="step-2">
+      <span class="q-label">Stay connected</span>
+      <div class="q-title">What's your WhatsApp number?</div>
+      <div class="q-sub">I'll send you the Telegram link and your free book here.</div>
+      <input type="tel" id="inputPhone" placeholder="e.g. 08012345678" autocomplete="tel" />
+      <div class="input-error" id="errorPhone">Please enter a valid phone number.</div>
+      <button class="btn-primary" onclick="validatePhone()">
+        Continue <span class="arrow">→</span>
+      </button>
+      <button class="btn-back" onclick="prevStep()">← Go back</button>
+    </div>
+
+    <!-- STEP 3: Email -->
+    <div class="step" id="step-3">
+      <span class="q-label">One more contact</span>
+      <div class="q-title">And your email address?</div>
+      <div class="q-sub">I'll send you a reminder before the night so you don't miss it.</div>
+      <input type="email" id="inputEmail" placeholder="yourname@email.com" autocomplete="email" />
+      <div class="input-error" id="errorEmail">That doesn't look like a valid email. Try again.</div>
+      <button class="btn-primary" onclick="validateEmail()">
+        Continue <span class="arrow">→</span>
+      </button>
+      <button class="btn-back" onclick="prevStep()">← Go back</button>
+    </div>
+
+    <!-- STEP 4: Crossroads -->
+    <div class="step" id="step-4">
+      <span class="q-label">Tell me about you</span>
+      <div class="q-title">Where are you right now?</div>
+      <div class="q-sub">Pick the one that feels most like your current season.</div>
+      <div class="options-grid" id="crossroadsGrid">
+        <button class="option-btn" onclick="selectOption(this,'crossroadsGrid','crossroads')">
+          <div class="option-radio"></div>
+          <div class="option-text">JSS3 — I'm choosing between art, science, or commercial</div>
+        </button>
+        <button class="option-btn" onclick="selectOption(this,'crossroadsGrid','crossroads')">
+          <div class="option-radio"></div>
+          <div class="option-text">SS3 — I'm trying to figure out what to study in university</div>
+        </button>
+        <button class="option-btn" onclick="selectOption(this,'crossroadsGrid','crossroads')">
+          <div class="option-radio"></div>
+          <div class="option-text">Final year — I have a degree and I don't know what comes next</div>
+        </button>
+        <button class="option-btn" onclick="selectOption(this,'crossroadsGrid','crossroads')">
+          <div class="option-radio"></div>
+          <div class="option-text">Adult — I've been sitting with this question for a while</div>
+        </button>
+      </div>
+      <div class="input-error" id="errorCrossroads">Please pick the one that fits you.</div>
+      <button class="btn-primary" onclick="validateOption('crossroads','errorCrossroads',false)">
+        Continue <span class="arrow">→</span>
+      </button>
+      <button class="btn-back" onclick="prevStep()">← Go back</button>
+    </div>
+
+    <!-- STEP 5: Biggest struggle -->
+    <div class="step" id="step-5">
+      <span class="q-label">Let's go deeper</span>
+      <div class="q-title">What's the hardest part of this decision for you right now?</div>
+      <div class="q-sub">You don't need to filter this. Write the honest version. Even one sentence.</div>
+      <textarea id="inputStruggle" placeholder="I don't know where to start. Everyone has an opinion and none of it sounds like me..."></textarea>
+      <div class="input-error" id="errorStruggle">Please write something — even one sentence. It helps me understand you.</div>
+      <button class="btn-primary" onclick="validateText('inputStruggle','errorStruggle','struggle')">
+        Continue <span class="arrow">→</span>
+      </button>
+      <button class="btn-back" onclick="prevStep()">← Go back</button>
+    </div>
+
+    <!-- STEP 6: Bad direction -->
+    <div class="step" id="step-6">
+      <span class="q-label">Real talk</span>
+      <div class="q-title">Has anyone ever tried to give you direction about this — and it didn't help?</div>
+      <div class="q-sub">What did they say, and why did it miss?</div>
+      <div class="options-grid" id="directionGrid">
+        <button class="option-btn" onclick="selectOption(this,'directionGrid','direction')">
+          <div class="option-radio"></div>
+          <div class="option-text">Yes — they told me what to do without actually understanding me</div>
+        </button>
+        <button class="option-btn" onclick="selectOption(this,'directionGrid','direction')">
+          <div class="option-radio"></div>
+          <div class="option-text">Yes — they just said "pray about it" and left me there</div>
+        </button>
+        <button class="option-btn" onclick="selectOption(this,'directionGrid','direction')">
+          <div class="option-radio"></div>
+          <div class="option-text">Yes — they pushed me toward what they wanted, not what fit me</div>
+        </button>
+        <button class="option-btn" onclick="selectOption(this,'directionGrid','direction')">
+          <div class="option-radio"></div>
+          <div class="option-text">No — nobody has really tried to help me with this</div>
+        </button>
+        <button class="option-btn" onclick="selectOption(this,'directionGrid','direction')">
+          <div class="option-radio"></div>
+          <div class="option-text">I haven't really asked anyone</div>
+        </button>
+      </div>
+      <div class="input-error" id="errorDirection">Please pick one.</div>
+      <button class="btn-primary" onclick="validateOption('direction','errorDirection',false)">
+        Continue <span class="arrow">→</span>
+      </button>
+      <button class="btn-back" onclick="prevStep()">← Go back</button>
+    </div>
+
+    <!-- STEP 7: Source -->
+    <div class="step" id="step-7">
+      <span class="q-label">Almost done</span>
+      <div class="q-title">How did you find out about this program?</div>
+      <div class="q-sub">Be as specific as you can — this genuinely helps me.</div>
+      <div class="options-grid" id="sourceGrid">
+        <button class="option-btn" onclick="selectOption(this,'sourceGrid','source')">
+          <div class="option-radio"></div>
+          <div class="option-text">WhatsApp — someone sent it to me</div>
+        </button>
+        <button class="option-btn" onclick="selectOption(this,'sourceGrid','source')">
+          <div class="option-radio"></div>
+          <div class="option-text">Instagram — I saw it on a page or a story</div>
+        </button>
+        <button class="option-btn" onclick="selectOption(this,'sourceGrid','source')">
+          <div class="option-radio"></div>
+          <div class="option-text">I already follow Chidinma / The Revolutionary Educator</div>
+        </button>
+        <button class="option-btn" onclick="selectOption(this,'sourceGrid','source')">
+          <div class="option-radio"></div>
+          <div class="option-text">A friend or family member told me directly</div>
+        </button>
+        <button class="option-btn" onclick="selectOption(this,'sourceGrid','source')">
+          <div class="option-radio"></div>
+          <div class="option-text">Somewhere else</div>
+        </button>
+      </div>
+      <div class="input-error" id="errorSource">Please pick one.</div>
+      <button class="btn-primary" onclick="validateOption('source','errorSource',true)">
+        Submit my registration <span class="arrow">→</span>
+      </button>
+      <button class="btn-back" onclick="prevStep()">← Go back</button>
+    </div>
+
+    <!-- STEP 8: Success -->
+    <div class="step" id="step-8">
+      <div class="success-icon">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      </div>
+      <div class="success-title">You're in, <em id="successName"></em>.</div>
+      <div class="success-body">
+        Your spot is saved. One last thing — tap the button below to send me your details on WhatsApp. That's how I'll confirm you and make sure you get everything before May 8th.
+      </div>
+      <div class="success-details">
+        <p>📅 <span>Thursday, May 8th 2025</span> — 7:00 PM WAT</p>
+        <p>📍 Platform: <span>Telegram</span></p>
+        <p>🎁 Your free book: <span>delivered on the night</span></p>
+      </div>
+      <a class="btn-whatsapp" id="whatsappBtn" href="#" target="_blank">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        Confirm on WhatsApp
+      </a>
+      <div class="whatsapp-note">This opens WhatsApp with your details already written out. Just hit send.</div>
+    </div>
+
+  </div>
+
+  <div class="card-footer">
+    <span class="brand-name">Chidinma Nwatu</span>
+    <span class="brand-tag">The Revolutionary Educator</span>
+  </div>
+</div>
+
+<script>
+  const WHATSAPP_NUMBER = '2347047334979';
+  const TOTAL_REAL_STEPS = 7; // steps 1-7
+
+  const state = {
+    name: '', phone: '', email: '',
+    crossroads: '', struggle: '', direction: '', source: ''
+  };
+
+  const labels = [
+    'Welcome', 'Your name', 'Your number', 'Your email',
+    'Where you are', 'Your struggle', 'Past direction', 'How you found us', 'All done!'
+  ];
+
+  let current = 0;
+
+  function updateUI() {
+    const pct = current === 0 ? 0 : current === 8 ? 100 : Math.round((current / TOTAL_REAL_STEPS) * 100);
+    document.getElementById('progressFill').style.width = pct + '%';
+    document.getElementById('stepLabel').textContent = labels[current];
+
+    const dots = document.getElementById('stepDots');
+    dots.innerHTML = '';
+    if (current > 0 && current < 8) {
+      for (let i = 1; i <= TOTAL_REAL_STEPS; i++) {
+        const d = document.createElement('div');
+        d.className = 'dot' + (i < current ? ' done' : i === current ? ' active' : '');
+        dots.appendChild(d);
+      }
+    }
+  }
+
+  function showStep(n) {
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById('step-' + n).classList.add('active');
+    current = n;
+    updateUI();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function nextStep() { showStep(current + 1); }
+  function prevStep() { if (current > 0) showStep(current - 1); }
+
+  function validateText(inputId, errorId, field) {
+    const el = document.getElementById(inputId);
+    const err = document.getElementById(errorId);
+    const val = el.value.trim();
+    if (val.length < 2) { err.classList.add('show'); el.focus(); return; }
+    err.classList.remove('show');
+    state[field] = val;
+    nextStep();
+  }
+
+  function validatePhone() {
+    const el = document.getElementById('inputPhone');
+    const err = document.getElementById('errorPhone');
+    const digits = el.value.replace(/\D/g, '');
+    if (digits.length < 10) { err.classList.add('show'); el.focus(); return; }
+    err.classList.remove('show');
+    state.phone = el.value.trim();
+    nextStep();
+  }
+
+  function validateEmail() {
+    const el = document.getElementById('inputEmail');
+    const err = document.getElementById('errorEmail');
+    const val = el.value.trim();
+    if (!val.includes('@') || !val.includes('.') || val.length < 5) {
+      err.classList.add('show'); el.focus(); return;
+    }
+    err.classList.remove('show');
+    state.email = val;
+    nextStep();
+  }
+
+  function selectOption(btn, gridId, field) {
+    document.querySelectorAll('#' + gridId + ' .option-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    state[field] = btn.querySelector('.option-text').textContent.trim();
+  }
+
+  function validateOption(field, errorId, isLast) {
+    const err = document.getElementById(errorId);
+    if (!state[field]) { err.classList.add('show'); return; }
+    err.classList.remove('show');
+    if (isLast) {
+      buildLink();
+      document.getElementById('successName').textContent = state.name;
+      showStep(8);
+    } else {
+      nextStep();
+    }
+  }
+
+  function buildLink() {
+    const msg =
+`🌟 *New Registration — Where Do I Go From Here?*
+
+👤 *Name:* ${state.name}
+📱 *Phone:* ${state.phone}
+📧 *Email:* ${state.email}
+
+📍 *Where they are:*
+${state.crossroads}
+
+💬 *Biggest struggle:*
+${state.struggle}
+
+🔁 *Direction experience:*
+${state.direction}
+
+🔍 *How they found the program:*
+${state.source}
+
+_Registered via the program page_`;
+
+    document.getElementById('whatsappBtn').href =
+      'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(msg);
+  }
+
+  updateUI();
+</script>
+</body>
+</html>

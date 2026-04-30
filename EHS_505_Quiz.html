@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a1410">
+<title>EHS 505 — Environmental Epidemiology</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js" crossorigin></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  html, body { background: #0f0c0a; }
+  body { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes scaleIn { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
+  @keyframes slideRight { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: translateX(0); } }
+  .fade-in { animation: fadeIn 0.4s ease-out; }
+  .scale-in { animation: scaleIn 0.3s ease-out; }
+  .slide-right { animation: slideRight 0.4s ease-out; }
+  .display-font { font-family: 'Fraunces', Georgia, serif; font-optical-sizing: auto; }
+  .grain-overlay::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 1;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3CfeColorMatrix values='0 0 0 0 0.6 0 0 0 0 0.4 0 0 0 0 0.2 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.4;
+  }
+  #loading { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; color: #d4a574; font-family: 'Fraunces', serif; font-style: italic; font-size: 18px; }
+  #loading.hidden { display: none; }
+</style>
+</head>
+<body>
+<div id="loading">loading your study pack...</div>
+<div id="root"></div>
+
+<script type="text/babel" data-type="module" data-presets="react">
+const { useState, useEffect, useMemo } = React;
+
+const Icon = ({ children, size = 18, className = '' }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
+);
+const Activity = (p) => <Icon {...p}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></Icon>;
+const RotateCcw = (p) => <Icon {...p}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></Icon>;
+const ChevronLeft = (p) => <Icon {...p}><path d="m15 18-6-6 6-6"/></Icon>;
+const ChevronRight = (p) => <Icon {...p}><path d="m9 18 6-6-6-6"/></Icon>;
+const Check = (p) => <Icon {...p}><path d="M20 6 9 17l-5-5"/></Icon>;
+const X = (p) => <Icon {...p}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></Icon>;
+const Shuffle = (p) => <Icon {...p}><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22"/><path d="m18 2 4 4-4 4"/><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2"/><path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8"/><path d="m18 14 4 4-4 4"/></Icon>;
+const BookOpen = (p) => <Icon {...p}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></Icon>;
+const Layers = (p) => <Icon {...p}><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></Icon>;
+const FileText = (p) => <Icon {...p}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></Icon>;
+const Target = (p) => <Icon {...p}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></Icon>;
+const Trophy = (p) => <Icon {...p}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></Icon>;
+
+const MCQ_BANK = [{"topic": "Foundations", "q": "Epidemiology is the study of:", "options": ["Skin diseases", "Distribution and determinants of health-related states in populations", "Microbes only", "Hospitals"], "correct": 1, "explain": "Epi=upon, demos=people, logos=study."}, {"topic": "Foundations", "q": "Environmental epidemiology focuses on:", "options": ["All diseases", "Health effects from environmental exposures", "Hospital infections", "Genetics"], "correct": 1, "explain": "Specifically environmental causes of disease."}, {"topic": "Foundations", "q": "The epidemiological triad consists of:", "options": ["Doctor, patient, drug", "Agent, host, environment", "Cause, symptom, cure", "Person, time, money"], "correct": 1, "explain": "Classic disease causation model."}, {"topic": "Foundations", "q": "Person, place, time refers to:", "options": ["Random data", "Descriptive epidemiology variables", "Lab tests", "Marketing"], "correct": 1, "explain": "Three core descriptive variables."}, {"topic": "Foundations", "q": "Endemic disease is:", "options": ["Outbreak", "Constantly present in a population", "Imported", "Eradicated"], "correct": 1, "explain": "Baseline disease level always present."}, {"topic": "Foundations", "q": "Epidemic disease:", "options": ["Constant", "Excess of expected cases", "Eradicated", "Personal"], "correct": 1, "explain": "Above expected baseline."}, {"topic": "Foundations", "q": "Pandemic is:", "options": ["Local", "Worldwide epidemic", "Personal", "Lab disease"], "correct": 1, "explain": "Multiple countries/continents."}, {"topic": "Foundations", "q": "Sporadic disease:", "options": ["Common", "Irregular, no pattern", "Predictable", "Constant"], "correct": 1, "explain": "Scattered occurrences."}, {"topic": "Stats", "q": "Descriptive statistics include:", "options": ["Hypothesis tests", "Mean, median, mode, range, SD", "Just numbers", "Just graphs"], "correct": 1, "explain": "Summarise and describe data."}, {"topic": "Stats", "q": "Inferential statistics:", "options": ["Just summarise", "Use samples to make conclusions about populations", "Just count", "Random"], "correct": 1, "explain": "Generalise sample to population."}, {"topic": "Stats", "q": "Mean is:", "options": ["Middle", "Sum / count", "Most common", "Range"], "correct": 1, "explain": "Arithmetic average."}, {"topic": "Stats", "q": "Median is:", "options": ["Average", "Middle value when ordered", "Most common", "Range"], "correct": 1, "explain": "50th percentile."}, {"topic": "Stats", "q": "Mode is:", "options": ["Average", "Middle", "Most frequently occurring", "Range"], "correct": 2, "explain": "Most common value."}, {"topic": "Stats", "q": "Standard deviation measures:", "options": ["Average", "Spread around mean", "Total", "Median"], "correct": 1, "explain": "Variability indicator."}, {"topic": "Stats", "q": "P-value < 0.05 means:", "options": ["Bad data", "Statistically significant", "Random", "Useless"], "correct": 1, "explain": "Less than 5% chance random."}, {"topic": "Stats", "q": "Confidence interval shows:", "options": ["Point estimate", "Range likely to contain true value", "Random", "Average"], "correct": 1, "explain": "95% CI common."}, {"topic": "Stats", "q": "T-test compares:", "options": ["Counts", "Means of two groups", "Categorical", "Modes"], "correct": 1, "explain": "Student's t-test."}, {"topic": "Stats", "q": "Chi-square compares:", "options": ["Means", "Categorical data frequencies", "SD", "Modes"], "correct": 1, "explain": "For count data."}, {"topic": "Stats", "q": "ANOVA compares:", "options": ["2 groups", "Means of 3+ groups", "Categorical", "Random"], "correct": 1, "explain": "Analysis of Variance."}, {"topic": "Stats", "q": "Poisson Regression for:", "options": ["Continuous", "Count data and rates", "Categorical only", "Marketing"], "correct": 1, "explain": "Common in env epi for rare events."}, {"topic": "Measures", "q": "Prevalence is:", "options": ["New cases", "Existing cases (old + new)", "Just deaths", "Incidence"], "correct": 1, "explain": "All current cases."}, {"topic": "Measures", "q": "Incidence is:", "options": ["Existing", "New cases occurring during period", "All", "Deaths"], "correct": 1, "explain": "Rate of new cases."}, {"topic": "Measures", "q": "Point prevalence:", "options": ["Year", "Cases at single point in time", "New", "Old"], "correct": 1, "explain": "Snapshot."}, {"topic": "Measures", "q": "Period prevalence:", "options": ["Snapshot", "Cases during a period", "New", "Deaths"], "correct": 1, "explain": "Cases over interval."}, {"topic": "Measures", "q": "Mortality rate:", "options": ["Birth", "Deaths per population", "Migration", "Marriage"], "correct": 1, "explain": "Deaths per population per time."}, {"topic": "Measures", "q": "Morbidity rate:", "options": ["Death", "Disease occurrence rate", "Birth", "Migration"], "correct": 1, "explain": "Illness rate."}, {"topic": "Measures", "q": "Case fatality rate:", "options": ["All deaths", "Deaths among diagnosed cases", "Births", "Random"], "correct": 1, "explain": "Deaths/total cases of specific disease."}, {"topic": "Measures", "q": "Attack rate:", "options": ["Crime", "Cumulative incidence in outbreak", "Marketing", "Random"], "correct": 1, "explain": "Outbreak-specific cumulative incidence."}, {"topic": "Measures", "q": "Relative risk compares:", "options": ["Just exposed", "Risk in exposed vs unexposed", "Just outcome", "Random"], "correct": 1, "explain": "Cohort study measure."}, {"topic": "Measures", "q": "Odds ratio:", "options": ["Same as RR", "Approximation in case-control", "Risk", "Profit"], "correct": 1, "explain": "Case-control measure."}, {"topic": "Studies", "q": "Cohort study:", "options": ["Backward", "Follow exposed/unexposed forward", "Cross-sectional", "Random"], "correct": 1, "explain": "Forward longitudinal."}, {"topic": "Studies", "q": "Case-control study:", "options": ["Forward", "Compare cases/controls retrospectively", "Cross-sectional", "Random"], "correct": 1, "explain": "Backward from outcome."}, {"topic": "Studies", "q": "Cross-sectional study:", "options": ["Long-term", "Snapshot at one point", "Random", "Marketing"], "correct": 1, "explain": "Both measured simultaneously."}, {"topic": "Studies", "q": "Ecological study:", "options": ["Individual", "Population-level", "Random", "Marketing"], "correct": 1, "explain": "Group-level associations."}, {"topic": "Studies", "q": "RCT:", "options": ["Random Census", "Randomised Controlled Trial", "Reverse Test", "Random"], "correct": 1, "explain": "Gold standard interventional."}, {"topic": "Surveillance", "q": "Disease surveillance:", "options": ["One-time", "Continuous data collection, analysis, dissemination", "Random", "Marketing"], "correct": 1, "explain": "Ongoing monitoring."}, {"topic": "Surveillance", "q": "Active surveillance:", "options": ["Wait", "Health dept actively seeks cases", "Random", "Lazy"], "correct": 1, "explain": "Resource-intensive."}, {"topic": "Surveillance", "q": "Passive surveillance:", "options": ["Active", "Providers report voluntarily", "Random", "Lazy"], "correct": 1, "explain": "Common but underreports."}, {"topic": "Surveillance", "q": "Sentinel surveillance:", "options": ["All", "Selected sites monitor", "Random", "Marketing"], "correct": 1, "explain": "Subset as sentinels."}, {"topic": "Surveillance", "q": "Notifiable diseases:", "options": ["Optional", "Must be reported by law", "Random", "Marketing"], "correct": 1, "explain": "Legally mandated."}, {"topic": "Outbreak", "q": "Outbreak begins with:", "options": ["Random", "Establishing existence of outbreak", "Random", "Marketing"], "correct": 1, "explain": "Confirm before investigating."}, {"topic": "Outbreak", "q": "Steps in outbreak investigation:", "options": ["One", "Define case, find cases, hypothesis, test, control, report", "Random", "Marketing"], "correct": 1, "explain": "Systematic approach."}, {"topic": "Outbreak", "q": "Index case:", "options": ["Last", "First identified", "Random", "Marketing"], "correct": 1, "explain": "Initial case."}, {"topic": "Outbreak", "q": "Primary case:", "options": ["First infected from source", "Secondary", "Random", "Marketing"], "correct": 0, "explain": "From primary source."}, {"topic": "Outbreak", "q": "Secondary case:", "options": ["Source", "Acquired from primary case", "Random", "Marketing"], "correct": 1, "explain": "Person-to-person."}, {"topic": "Outbreak", "q": "Epidemic curve shows:", "options": ["Random", "Cases over time", "Just totals", "Marketing"], "correct": 1, "explain": "Visual outbreak pattern."}, {"topic": "Outbreak", "q": "Common-source outbreak:", "options": ["Random", "Sharp peak from single exposure", "Multiple", "Marketing"], "correct": 1, "explain": "Single exposure event."}, {"topic": "Outbreak", "q": "Propagated outbreak:", "options": ["Single", "Person-to-person, multiple peaks", "Random", "Marketing"], "correct": 1, "explain": "Successive generations."}, {"topic": "RiskAssessment", "q": "Risk assessment includes:", "options": ["One step", "Hazard ID, dose-response, exposure, risk characterisation", "Random", "Marketing"], "correct": 1, "explain": "4 steps."}, {"topic": "RiskAssessment", "q": "Hazard identification:", "options": ["What", "Identifying agents that may harm", "Random", "Marketing"], "correct": 1, "explain": "What can cause harm?"}, {"topic": "RiskAssessment", "q": "Dose-response:", "options": ["Random", "Exposure level vs effect", "Just effect", "Just dose"], "correct": 1, "explain": "How much exposure causes how much effect."}, {"topic": "Pollution", "q": "Air pollution effects:", "options": ["Cosmetic", "Respiratory, cardiovascular, cancer, neurological", "Headache", "Random"], "correct": 1, "explain": "Multiple system effects."}, {"topic": "Pollution", "q": "Common air pollutants:", "options": ["Smoke", "CO, SO2, NOx, O3, PM, lead", "Dust", "Random"], "correct": 1, "explain": "6 criteria pollutants."}, {"topic": "Pollution", "q": "Water pollution causes:", "options": ["No issues", "Diarrhoea, cholera, typhoid, hepatitis A", "Smell", "Random"], "correct": 1, "explain": "Waterborne diseases."}, {"topic": "Pollution", "q": "Soil pollution sources:", "options": ["Farming", "Industrial waste, pesticides, mining, sewage", "Dust", "Random"], "correct": 1, "explain": "Multiple sources."}, {"topic": "Radiation", "q": "Ionising radiation:", "options": ["Light", "Alpha, beta, gamma, X-rays", "Sound", "Microwaves only"], "correct": 1, "explain": "High-energy."}, {"topic": "Radiation", "q": "Non-ionising radiation:", "options": ["Alpha", "UV, visible, IR, microwaves, radio", "Gamma", "X-rays"], "correct": 1, "explain": "Lower energy."}, {"topic": "Radiation", "q": "Radon health effect:", "options": ["None", "Lung cancer (top after smoking)", "Skin", "Diabetes"], "correct": 1, "explain": "Second leading cause of lung cancer."}, {"topic": "Radiation", "q": "UV effects:", "options": ["Always good", "Skin cancer, cataracts, immune", "Just tan", "Random"], "correct": 1, "explain": "Non-ionising health effects."}, {"topic": "Radiation", "q": "ALARA:", "options": ["Random", "As Low As Reasonably Achievable", "Marketing", "Just phrase"], "correct": 1, "explain": "Radiation protection principle."}, {"topic": "Radiation", "q": "3 protection pillars:", "options": ["Time, Distance, Shielding", "Random", "Marketing", "One"], "correct": 0, "explain": "TDS principles."}, {"topic": "Clusters", "q": "Disease cluster:", "options": ["Random", "Unusual aggregation by time/place", "Marketing", "Random"], "correct": 1, "explain": "Investigation trigger."}, {"topic": "Clusters", "q": "Cluster investigation:", "options": ["Skip", "Confirm, characterise, investigate causes", "Random", "Marketing"], "correct": 1, "explain": "Systematic approach."}, {"topic": "Clusters", "q": "Spatial pattern analysis:", "options": ["Numbers", "Maps disease by location", "Random", "Marketing"], "correct": 1, "explain": "Geographic analysis."}, {"topic": "Clusters", "q": "Time-trend analysis:", "options": ["Random", "Patterns over time", "Marketing", "Numbers"], "correct": 1, "explain": "Temporal patterns."}, {"topic": "Software", "q": "SPSS:", "options": ["Marketing", "Statistical Package for Social Sciences", "Random", "Browser"], "correct": 1, "explain": "Statistical analysis tool."}, {"topic": "Software", "q": "EPI-INFO:", "options": ["Marketing", "CDC public health software", "Game", "Random"], "correct": 1, "explain": "Free epi tool."}, {"topic": "Software", "q": "Epidata:", "options": ["Marketing", "Data entry tool", "Random", "Game"], "correct": 1, "explain": "For epi research."}, {"topic": "Bias", "q": "Selection bias:", "options": ["Good", "Systematic error from non-random selection", "Random", "Marketing"], "correct": 1, "explain": "Sample doesn't represent."}, {"topic": "Bias", "q": "Information bias:", "options": ["Good", "Error in measuring exposure/outcome", "Random", "Marketing"], "correct": 1, "explain": "Recall, observer bias."}, {"topic": "Bias", "q": "Confounding:", "options": ["Good", "Third variable affecting relationship", "Random", "Marketing"], "correct": 1, "explain": "Distorts true association."}, {"topic": "Causality", "q": "Bradford Hill criteria:", "options": ["Random", "9 criteria for causal inference", "Marketing", "One"], "correct": 1, "explain": "Strength, consistency, specificity, temporality, gradient, plausibility, coherence, experiment, analogy."}, {"topic": "Causality", "q": "Temporality means:", "options": ["Random", "Cause precedes effect", "Marketing", "Random"], "correct": 1, "explain": "Essential for causality."}, {"topic": "Causality", "q": "Strong association:", "options": ["Random", "Larger RR = stronger evidence", "Marketing", "Numbers"], "correct": 1, "explain": "Strength criterion."}, {"topic": "Vital", "q": "Vital statistics:", "options": ["Random", "Birth, death, marriage, migration", "Death", "Birth"], "correct": 1, "explain": "Population events."}, {"topic": "Vital", "q": "Birth rate:", "options": ["Random", "Live births per 1000", "Numbers", "Marketing"], "correct": 1, "explain": "Crude birth rate."}, {"topic": "Vital", "q": "Death rate:", "options": ["Random", "Deaths per 1000", "Numbers", "Marketing"], "correct": 1, "explain": "Crude death rate."}, {"topic": "Vital", "q": "Infant mortality rate:", "options": ["Random", "Deaths under 1 year per 1000 live births", "Just deaths", "Marketing"], "correct": 1, "explain": "Key health indicator."}, {"topic": "Vital", "q": "Maternal mortality ratio:", "options": ["Random", "Maternal deaths per 100,000 live births", "Just deaths", "Marketing"], "correct": 1, "explain": "Pregnancy-related deaths."}, {"topic": "PollutionDetail", "q": "Lead poisoning:", "options": ["Random", "Neurological damage, especially children", "Skin", "Marketing"], "correct": 1, "explain": "Major environmental concern."}, {"topic": "PollutionDetail", "q": "Mercury exposure:", "options": ["No issues", "Neurological damage, especially fetal", "Random", "Smell"], "correct": 1, "explain": "Methylmercury especially harmful."}, {"topic": "PollutionDetail", "q": "Asbestos exposure:", "options": ["No issue", "Lung cancer, mesothelioma, asbestosis", "Dust", "Random"], "correct": 1, "explain": "Banned in many countries."}, {"topic": "OutbreakDetail", "q": "Case definition includes:", "options": ["Name", "Clinical, lab, epi criteria", "Random", "Numbers"], "correct": 1, "explain": "Standard inclusion criteria."}, {"topic": "OutbreakDetail", "q": "Hypothesis generation:", "options": ["Random", "Use descriptive data", "Guess", "Marketing"], "correct": 1, "explain": "Case interviews and review."}, {"topic": "OutbreakDetail", "q": "Hypothesis testing:", "options": ["Random", "Analytical study", "Guess", "Marketing"], "correct": 1, "explain": "Quantitative testing."}, {"topic": "OutbreakDetail", "q": "Control measures:", "options": ["Optional", "Implemented to stop outbreak", "Random", "Marketing"], "correct": 1, "explain": "Source removal, prophylaxis."}, {"topic": "PublicHealth", "q": "Final outbreak step:", "options": ["Random", "Communicate, implement long-term prevention", "Numbers", "Marketing"], "correct": 1, "explain": "Report and prevent recurrence."}, {"topic": "Screening", "q": "Screening test characteristics:", "options": ["Random", "Sensitivity, specificity, PPV, NPV", "Marketing", "One"], "correct": 1, "explain": "Test performance metrics."}, {"topic": "Screening", "q": "Sensitivity:", "options": ["Random", "Correctly identify cases", "Numbers", "Marketing"], "correct": 1, "explain": "True positive rate."}, {"topic": "Screening", "q": "Specificity:", "options": ["Random", "Correctly identify non-cases", "Numbers", "Marketing"], "correct": 1, "explain": "True negative rate."}, {"topic": "Screening", "q": "PPV:", "options": ["Random", "Probability of disease given positive", "Numbers", "Marketing"], "correct": 1, "explain": "Affected by prevalence."}, {"topic": "Specific", "q": "Vector-borne disease:", "options": ["Direct", "Transmitted by intermediate organism", "Random", "Marketing"], "correct": 1, "explain": "Mosquitoes, ticks etc."}, {"topic": "Specific", "q": "Food-borne illness:", "options": ["Random", "Through contaminated food", "Marketing", "Smell"], "correct": 1, "explain": "Major environmental category."}, {"topic": "Specific", "q": "Waterborne disease:", "options": ["Random", "Through contaminated water", "Marketing", "Look"], "correct": 1, "explain": "Cholera, typhoid, hep A."}, {"topic": "Application", "q": "Environmental epi applies:", "options": ["Random", "Epi methods to environmental health", "Marketing", "Random"], "correct": 1, "explain": "Specialty area."}, {"topic": "Application", "q": "Environmental epi addresses:", "options": ["Chemicals", "Air, water, soil, radiation, food, occupational", "Random", "Marketing"], "correct": 1, "explain": "Comprehensive scope."}, {"topic": "GIS", "q": "GIS in epidemiology:", "options": ["Marketing", "Spatial analysis of disease", "Random", "Useless"], "correct": 1, "explain": "Adds 'place'."}, {"topic": "GIS", "q": "Disease mapping:", "options": ["Random", "Visualises distribution geographically", "Marketing", "Count"], "correct": 1, "explain": "Communicates findings."}, {"topic": "Risk", "q": "Population attributable risk:", "options": ["Random", "Disease proportion due to exposure", "Numbers", "Marketing"], "correct": 1, "explain": "Public health impact."}, {"topic": "Risk", "q": "Attributable risk:", "options": ["Random", "Excess risk in exposed", "Numbers", "Marketing"], "correct": 1, "explain": "Difference exposed vs unexposed."}, {"topic": "Communication", "q": "Risk communication:", "options": ["Optional", "Informing public about hazards", "Random", "Marketing"], "correct": 1, "explain": "Public health function."}, {"topic": "Ethics", "q": "Research ethics include:", "options": ["Random", "Informed consent, confidentiality, benefit/risk", "One", "Marketing"], "correct": 1, "explain": "Ethical research conduct."}];
+const FLASHCARDS = [{"term": "Epidemiology", "def": "Study of distribution and determinants of health-related states/events in populations, applied to disease control."}, {"term": "Environmental Epidemiology", "def": "Branch focusing on health effects from environmental exposures - air, water, soil, radiation, food."}, {"term": "Epidemiological Triad", "def": "Agent + Host + Environment. Classic disease causation model."}, {"term": "Person Place Time", "def": "Three core descriptive epidemiology variables."}, {"term": "Endemic", "def": "Disease constantly present in a geographic area at expected baseline level."}, {"term": "Epidemic", "def": "Excess of expected cases in a community/region."}, {"term": "Pandemic", "def": "Worldwide epidemic affecting multiple countries/continents."}, {"term": "Outbreak", "def": "Localised epidemic, often used interchangeably."}, {"term": "Sporadic", "def": "Disease occurring irregularly with no pattern."}, {"term": "Descriptive Statistics", "def": "Mean, median, mode, range, SD - summarise data characteristics."}, {"term": "Inferential Statistics", "def": "Use samples to make conclusions about populations."}, {"term": "Mean", "def": "Arithmetic average. Sum / count."}, {"term": "Median", "def": "Middle value when ordered. 50th percentile."}, {"term": "Mode", "def": "Most frequently occurring value."}, {"term": "Standard Deviation", "def": "Spread of data around the mean."}, {"term": "P-value", "def": "Probability result is due to chance. <0.05 typically significant."}, {"term": "Confidence Interval", "def": "Range likely containing true population value, e.g. 95% CI."}, {"term": "T-test", "def": "Compares means of two groups."}, {"term": "Chi-square", "def": "Tests categorical data frequencies."}, {"term": "ANOVA", "def": "Compares means of 3+ groups."}, {"term": "Poisson Regression", "def": "For count data and rates - common in environmental epi."}, {"term": "Prevalence", "def": "All existing cases (old + new) in population at point/period."}, {"term": "Incidence", "def": "New cases occurring during a specified time period."}, {"term": "Point Prevalence", "def": "Cases at a single moment in time. Snapshot."}, {"term": "Period Prevalence", "def": "Cases during a specific period of time interval."}, {"term": "Mortality Rate", "def": "Deaths per population per time period."}, {"term": "Morbidity Rate", "def": "Disease occurrence rate in population."}, {"term": "Case Fatality Rate", "def": "Deaths among diagnosed cases of a disease."}, {"term": "Attack Rate", "def": "Cumulative incidence in an outbreak setting."}, {"term": "Relative Risk", "def": "Ratio of risk in exposed to unexposed - cohort studies."}, {"term": "Odds Ratio", "def": "Approximation of RR used in case-control studies."}, {"term": "Cohort Study", "def": "Follows exposed and unexposed forward in time."}, {"term": "Case-Control Study", "def": "Compares cases and controls retrospectively for exposures."}, {"term": "Cross-sectional Study", "def": "Snapshot - exposure and outcome measured simultaneously."}, {"term": "Ecological Study", "def": "Population-level data analysis."}, {"term": "RCT", "def": "Randomised Controlled Trial - gold standard interventional design."}, {"term": "Surveillance", "def": "Continuous data collection, analysis, dissemination for disease control."}, {"term": "Active Surveillance", "def": "Health department actively seeks cases."}, {"term": "Passive Surveillance", "def": "Healthcare providers report cases voluntarily."}, {"term": "Sentinel Surveillance", "def": "Selected sites monitor specific conditions."}, {"term": "Notifiable Disease", "def": "Must be reported by law to public health authorities."}, {"term": "Outbreak Investigation Steps", "def": "Confirm, define case, find cases, hypothesis, test, control, report."}, {"term": "Index Case", "def": "First identified case in an outbreak."}, {"term": "Primary Case", "def": "Acquired infection from primary source (not human)."}, {"term": "Secondary Case", "def": "Acquired infection from a primary case (human-to-human)."}, {"term": "Epidemic Curve", "def": "Visual showing cases over time during outbreak."}, {"term": "Common-source Outbreak", "def": "Sharp peak from single exposure event."}, {"term": "Propagated Outbreak", "def": "Person-to-person spread, multiple peaks."}, {"term": "Risk Assessment", "def": "4 steps: hazard identification, dose-response, exposure assessment, risk characterisation."}, {"term": "Bradford Hill Criteria", "def": "9 criteria for causal inference: strength, consistency, specificity, temporality, gradient, plausibility, coherence, experiment, analogy."}];
+const ESSAYS = [{"title": "Define epidemiology and discuss its scope in environmental health", "points": ["Definition", "Three core elements", "Environmental epi specialty", "Person, place, time", "Applications", "Importance"]}, {"title": "Compare descriptive and inferential statistics", "points": ["Descriptive: mean, median, mode, range, SD", "Inferential: from samples to populations", "T-tests, chi-square, ANOVA", "CIs and P-values", "Examples"]}, {"title": "Explain the process of disease outbreak investigation", "points": ["Confirm outbreak existence", "Establish case definition", "Find cases", "Generate hypothesis", "Test hypothesis", "Implement controls", "Communicate findings", "Long-term prevention"]}, {"title": "Discuss principles and practice of disease surveillance", "points": ["Definition", "Active vs passive vs sentinel", "Notifiable diseases", "Data sources", "Analysis", "Examples in Nigeria"]}, {"title": "Discuss causes and consequences of environmental pollution", "points": ["Air pollution", "Water pollution", "Soil pollution", "Mitigation strategies"]}, {"title": "Discuss sources and health effects of radiation", "points": ["Ionising vs non-ionising", "Sources", "Acute vs chronic effects", "Specific cancers", "Radon, UV, occupational", "ALARA", "TDS", "Mitigation"]}, {"title": "Discuss measures of disease frequency", "points": ["Prevalence", "Incidence", "Mortality", "CFR", "Attack rate", "When each is used"]}, {"title": "Compare cohort and case-control studies", "points": ["Cohort design", "Case-control design", "Strengths/weaknesses", "RR vs OR", "When to use which", "Examples"]}, {"title": "Discuss ecological studies in environmental epidemiology", "points": ["Definition", "Strengths", "Ecological fallacy", "When appropriate", "Limitations"]}, {"title": "Discuss bias and confounding", "points": ["Selection bias", "Information bias", "Confounding", "Controls: matching, stratification, regression", "Importance"]}, {"title": "Discuss Bradford Hill criteria for causal inference", "points": ["Strength", "Consistency", "Specificity", "Temporality", "Biological gradient", "Plausibility", "Coherence", "Experiment", "Analogy", "Application"]}, {"title": "Discuss vital statistics", "points": ["Definition", "Birth/death rates", "IMR", "MMR", "Life expectancy", "Sources", "Use in planning"]}, {"title": "Discuss screening tests", "points": ["Definition", "Sensitivity", "Specificity", "PPV/NPV", "Wilson-Jungner criteria", "Examples"]}, {"title": "Discuss risk assessment in environmental epidemiology", "points": ["4 steps", "Hazard identification", "Dose-response", "Exposure assessment", "Risk characterisation", "Examples"]}, {"title": "Discuss disease cluster investigation", "points": ["Definition", "Confirm", "Characterise", "Investigate", "Spatial vs temporal", "Methods", "Examples"]}, {"title": "Discuss the use of GIS in environmental epidemiology", "points": ["Definition", "Adds 'place'", "Disease mapping", "Hot spots", "Outbreak investigation", "Limitations"]}, {"title": "Discuss vector-borne diseases", "points": ["Definition", "Examples: malaria, dengue", "Environmental drivers", "Vector control", "Surveillance", "Mitigation"]}, {"title": "Discuss waterborne diseases", "points": ["Cholera, typhoid, hep A", "Faecal-oral route", "WASH", "Outbreak investigation", "Prevention"]}, {"title": "Discuss food-borne illness epidemiology", "points": ["Common pathogens", "Outbreak signs", "Investigation", "Food vehicle", "Control", "HACCP"]}, {"title": "Discuss heavy metal toxicity", "points": ["Lead", "Mercury", "Arsenic", "Cadmium", "Sources", "Surveillance", "Mitigation"]}, {"title": "Discuss air pollution epidemiology", "points": ["Pollutants", "Acute vs chronic", "Vulnerable groups", "Monitoring", "Standards", "Mitigation"]}, {"title": "Discuss statistical software in environmental epi", "points": ["SPSS", "EPI-INFO", "Epidata", "R", "STATA", "Choice criteria"]}, {"title": "Discuss occupational epidemiology", "points": ["Cohort designs", "Mortality studies", "Healthy worker effect", "Latency", "Application"]}, {"title": "Discuss climate change and health", "points": ["Direct effects", "Indirect effects", "Vulnerable populations", "Surveillance", "Adaptation", "Mitigation"]}, {"title": "Discuss research ethics in environmental epidemiology", "points": ["Informed consent", "Confidentiality", "Beneficence", "Vulnerable populations", "Community engagement", "IRB review"]}];
+const QUICK_REFERENCE = [{"category": "Disease Frequency", "items": [{"label": "Prevalence", "desc": "All existing cases / population"}, {"label": "Incidence", "desc": "New cases / population at risk"}, {"label": "Mortality", "desc": "Deaths / population"}, {"label": "CFR", "desc": "Deaths / cases of disease"}, {"label": "Attack Rate", "desc": "Outbreak cumulative incidence"}, {"label": "IMR", "desc": "Infant deaths / 1000 live births"}]}, {"category": "Study Designs", "items": [{"label": "Cohort", "desc": "Forward, exposed vs unexposed"}, {"label": "Case-control", "desc": "Backward, cases vs controls"}, {"label": "Cross-sectional", "desc": "Snapshot, both at once"}, {"label": "Ecological", "desc": "Population-level"}, {"label": "RCT", "desc": "Randomised intervention"}]}, {"category": "Statistical Tests", "items": [{"label": "T-test", "desc": "Compare 2 means"}, {"label": "ANOVA", "desc": "Compare 3+ means"}, {"label": "Chi-square", "desc": "Categorical data"}, {"label": "Poisson", "desc": "Counts, rates"}, {"label": "Regression", "desc": "Modeling relationships"}]}, {"category": "Bradford Hill", "items": [{"label": "1", "desc": "Strength"}, {"label": "2", "desc": "Consistency"}, {"label": "3", "desc": "Specificity"}, {"label": "4", "desc": "Temporality (essential)"}, {"label": "5", "desc": "Gradient"}, {"label": "6", "desc": "Plausibility"}, {"label": "7", "desc": "Coherence"}, {"label": "8", "desc": "Experiment"}, {"label": "9", "desc": "Analogy"}]}];
+
+function App() {
+  const [mode, setMode] = useState('home');
+  const [topicFilter, setTopicFilter] = useState('All');
+  const [questionIndex, setQuestionIndex] = useState(0);
+  const [selected, setSelected] = useState(null);
+  const [revealed, setRevealed] = useState(false);
+  const [score, setScore] = useState({ correct: 0, total: 0 });
+  const [shuffled, setShuffled] = useState(false);
+  const [questionOrder, setQuestionOrder] = useState([]);
+  const [flashIndex, setFlashIndex] = useState(0);
+  const [flashFlipped, setFlashFlipped] = useState(false);
+  const [flashOrder, setFlashOrder] = useState([]);
+  const [essayIndex, setEssayIndex] = useState(0);
+  const [revealedEssay, setRevealedEssay] = useState(false);
+
+  const topics = ['All', ...new Set(MCQ_BANK.map(q => q.topic))];
+
+  const filteredQuestions = useMemo(() => {
+    if (topicFilter === 'All') return MCQ_BANK;
+    return MCQ_BANK.filter(q => q.topic === topicFilter);
+  }, [topicFilter]);
+
+  useEffect(() => {
+    const order = filteredQuestions.map((_, i) => i);
+    if (shuffled) {
+      for (let i = order.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [order[i], order[j]] = [order[j], order[i]];
+      }
+    }
+    setQuestionOrder(order);
+    setQuestionIndex(0);
+    setSelected(null);
+    setRevealed(false);
+    setScore({ correct: 0, total: 0 });
+  }, [topicFilter, shuffled, filteredQuestions]);
+
+  useEffect(() => { setFlashOrder(FLASHCARDS.map((_, i) => i)); }, []);
+
+  const currentQ = filteredQuestions[questionOrder[questionIndex]];
+
+  const handleAnswer = (idx) => {
+    if (revealed) return;
+    setSelected(idx);
+    setRevealed(true);
+    setScore(s => ({ correct: s.correct + (idx === currentQ.correct ? 1 : 0), total: s.total + 1 }));
+  };
+
+  const nextQuestion = () => {
+    if (questionIndex < questionOrder.length - 1) {
+      setQuestionIndex(i => i + 1);
+      setSelected(null);
+      setRevealed(false);
+    }
+  };
+
+  const prevQuestion = () => {
+    if (questionIndex > 0) {
+      setQuestionIndex(i => i - 1);
+      setSelected(null);
+      setRevealed(false);
+    }
+  };
+
+  const restart = () => {
+    setQuestionIndex(0);
+    setSelected(null);
+    setRevealed(false);
+    setScore({ correct: 0, total: 0 });
+  };
+
+  const shuffleFlash = () => {
+    const order = [...flashOrder];
+    for (let i = order.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+    setFlashOrder(order);
+    setFlashIndex(0);
+    setFlashFlipped(false);
+  };
+
+  const currentFlash = FLASHCARDS[flashOrder[flashIndex]];
+  const currentEssay = ESSAYS[essayIndex];
+
+  return (
+    <div className="min-h-screen text-stone-100" style={{ background: 'radial-gradient(ellipse at top, #2a1f17 0%, #1a1410 50%, #0f0c0a 100%)', fontFamily: '"Plus Jakarta Sans", -apple-system, sans-serif' }}>
+      <div className="grain-overlay">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10 relative" style={{ zIndex: 2 }}>
+
+          <header className="mb-8 sm:mb-12 fade-in">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="h-px w-8 bg-amber-600/60"></div>
+              <span className="text-xs uppercase tracking-[0.3em] text-amber-500/80">EHS 505 · Day 5</span>
+            </div>
+            <h1 className="display-font text-4xl sm:text-6xl font-medium leading-[0.95] mb-3" style={{ color: '#f5e8d0' }}>
+              Environmental<br/>
+              <span className="italic" style={{ color: '#d4a574' }}>Epidemiology</span>
+            </h1>
+            <p className="text-stone-400 text-sm sm:text-base max-w-xl">Master prevalence vs incidence, study designs, and outbreak investigation. Bradford Hill criteria for causality.</p>
+          </header>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-6 sm:mb-8">
+            {[
+              { id: 'home', label: 'Quiz', icon: Target, desc: MCQ_BANK.length + ' MCQs' },
+              { id: 'flash', label: 'Flashcards', icon: Layers, desc: FLASHCARDS.length + ' cards' },
+              { id: 'essay', label: 'Essays', icon: FileText, desc: ESSAYS.length + ' outlines' },
+              { id: 'quick', label: 'Quick Ref', icon: BookOpen, desc: 'Drill cards' }
+            ].map(m => {
+              const I = m.icon;
+              const active = mode === m.id;
+              return (
+                <button key={m.id} onClick={() => setMode(m.id)} className={`group relative p-3 sm:p-4 rounded-lg border transition-all text-left ${active ? 'border-amber-500/60 bg-amber-950/30' : 'border-stone-800 hover:border-stone-700 bg-stone-950/40'}`}>
+                  <I size={18} className={active ? 'text-amber-400' : 'text-stone-400'} />
+                  <div className={`mt-2 text-sm font-medium ${active ? 'text-amber-100' : 'text-stone-200'}`}>{m.label}</div>
+                  <div className="text-[10px] sm:text-xs text-stone-500 mt-0.5">{m.desc}</div>
+                </button>
+              );
+            })}
+          </div>
+
+          {mode === 'home' && currentQ && (
+            <div className="fade-in">
+              <div className="bg-stone-950/60 border border-stone-800 rounded-lg p-4 mb-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="text-xs text-stone-500 uppercase tracking-wider">Question</div>
+                    <div className="display-font text-2xl text-amber-400">{questionIndex + 1}<span className="text-stone-600">/{questionOrder.length}</span></div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <div className="text-xs text-stone-500 uppercase tracking-wider">Score</div>
+                      <div className="display-font text-2xl">
+                        <span style={{ color: score.total > 0 && score.correct/score.total >= 0.7 ? '#86efac' : '#d4a574' }}>{score.correct}</span>
+                        <span className="text-stone-600">/{score.total}</span>
+                      </div>
+                    </div>
+                    <button onClick={restart} className="p-2 hover:bg-stone-800 rounded transition-colors" title="Restart"><RotateCcw size={16} className="text-stone-400" /></button>
+                    <button onClick={() => setShuffled(s => !s)} className={`p-2 rounded transition-colors ${shuffled ? 'bg-amber-950 text-amber-400' : 'hover:bg-stone-800 text-stone-400'}`} title="Shuffle"><Shuffle size={16} /></button>
+                  </div>
+                </div>
+                <div className="h-1 bg-stone-900 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-amber-700 to-amber-500 transition-all duration-500" style={{ width: `${((questionIndex + 1) / questionOrder.length) * 100}%` }}></div>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-1.5">
+                  {topics.map(t => (
+                    <button key={t} onClick={() => setTopicFilter(t)} className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${topicFilter === t ? 'border-amber-600 bg-amber-950/50 text-amber-200' : 'border-stone-800 text-stone-400 hover:border-stone-700'}`}>{t}</button>
+                  ))}
+                </div>
+              </div>
+
+              <div key={questionIndex} className="bg-stone-950/60 border border-stone-800 rounded-lg p-5 sm:p-7 scale-in">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.2em] text-amber-500/80 px-2 py-1 rounded-full bg-amber-950/30 border border-amber-900/40">
+                    <Activity size={14} />
+                    {currentQ.topic}
+                  </span>
+                </div>
+                <h2 className="display-font text-xl sm:text-2xl text-stone-100 leading-snug mb-6">{currentQ.q}</h2>
+                <div className="space-y-2">
+                  {currentQ.options.map((opt, i) => {
+                    const isCorrect = i === currentQ.correct;
+                    const isSelected = selected === i;
+                    let cls = 'border-stone-800 hover:border-stone-700 bg-stone-900/30';
+                    if (revealed) {
+                      if (isCorrect) cls = 'border-emerald-700 bg-emerald-950/40 text-emerald-100';
+                      else if (isSelected && !isCorrect) cls = 'border-rose-800 bg-rose-950/40 text-rose-200';
+                      else cls = 'border-stone-800 bg-stone-950/30 opacity-50';
+                    }
+                    return (
+                      <button key={i} onClick={() => handleAnswer(i)} disabled={revealed} className={`w-full text-left p-3 sm:p-4 rounded-lg border transition-all flex items-start gap-3 ${cls}`}>
+                        <div className={`flex-shrink-0 w-7 h-7 rounded-full border flex items-center justify-center text-xs font-medium ${revealed && isCorrect ? 'border-emerald-600 bg-emerald-900 text-emerald-200' : revealed && isSelected && !isCorrect ? 'border-rose-700 bg-rose-900 text-rose-200' : 'border-stone-700 text-stone-400'}`}>
+                          {revealed && isCorrect ? <Check size={14} /> : revealed && isSelected && !isCorrect ? <X size={14} /> : ['A','B','C','D'][i]}
+                        </div>
+                        <span className="text-sm sm:text-base pt-0.5">{opt}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {revealed && (
+                  <div className="mt-5 p-4 bg-amber-950/20 border-l-2 border-amber-600/60 rounded-r-lg slide-right">
+                    <div className="text-xs uppercase tracking-wider text-amber-500/80 mb-1">Why</div>
+                    <p className="text-sm text-stone-300 leading-relaxed">{currentQ.explain}</p>
+                  </div>
+                )}
+                <div className="flex justify-between items-center mt-6">
+                  <button onClick={prevQuestion} disabled={questionIndex === 0} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                    <ChevronLeft size={16} /> Previous
+                  </button>
+                  {questionIndex === questionOrder.length - 1 && revealed ? (
+                    <div className="flex items-center gap-2 text-amber-400 text-sm">
+                      <Trophy size={16} />
+                      Final score: {score.correct}/{score.total}
+                    </div>
+                  ) : (
+                    <button onClick={nextQuestion} disabled={!revealed || questionIndex === questionOrder.length - 1} className="flex items-center gap-1.5 px-4 py-2 bg-amber-700 hover:bg-amber-600 disabled:opacity-30 disabled:cursor-not-allowed text-stone-50 rounded-md text-sm font-medium transition-colors">
+                      Next <ChevronRight size={16} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {mode === 'flash' && (
+            <div className="fade-in">
+              <div className="bg-stone-950/60 border border-stone-800 rounded-lg p-4 mb-4 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="text-xs text-stone-500 uppercase tracking-wider">Card</div>
+                  <div className="display-font text-2xl text-amber-400">{flashIndex + 1}<span className="text-stone-600">/{FLASHCARDS.length}</span></div>
+                </div>
+                <button onClick={shuffleFlash} className="flex items-center gap-1.5 px-3 py-2 text-stone-300 hover:text-amber-400 border border-stone-800 hover:border-amber-700 rounded-md text-sm transition-colors">
+                  <Shuffle size={14} /> Shuffle
+                </button>
+              </div>
+              <div key={flashIndex} onClick={() => setFlashFlipped(f => !f)} className="bg-gradient-to-br from-stone-900 to-stone-950 border border-stone-800 rounded-lg p-7 sm:p-12 min-h-[280px] sm:min-h-[340px] flex items-center justify-center cursor-pointer hover:border-amber-700/60 transition-colors scale-in">
+                <div className="text-center max-w-2xl">
+                  {!flashFlipped ? (
+                    <>
+                      <div className="text-xs uppercase tracking-[0.3em] text-amber-500/70 mb-4">Term</div>
+                      <h2 className="display-font text-3xl sm:text-4xl font-medium text-stone-100 mb-4">{currentFlash.term}</h2>
+                      <p className="text-xs text-stone-500 mt-6 italic">tap to reveal</p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-xs uppercase tracking-[0.3em] text-amber-500/70 mb-4">Definition</div>
+                      <p className="text-base sm:text-lg text-stone-200 leading-relaxed">{currentFlash.def}</p>
+                      <p className="text-xs text-stone-500 mt-6 italic">tap to flip back</p>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-between items-center mt-4">
+                <button onClick={() => { setFlashIndex(i => Math.max(0, i-1)); setFlashFlipped(false); }} disabled={flashIndex === 0} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  <ChevronLeft size={16} /> Previous
+                </button>
+                <div className="flex-1 mx-4 h-1 bg-stone-900 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-amber-700 to-amber-500" style={{ width: `${((flashIndex + 1) / FLASHCARDS.length) * 100}%` }}></div>
+                </div>
+                <button onClick={() => { setFlashIndex(i => Math.min(FLASHCARDS.length-1, i+1)); setFlashFlipped(false); }} disabled={flashIndex === FLASHCARDS.length-1} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  Next <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {mode === 'essay' && currentEssay && (
+            <div className="fade-in">
+              <div className="bg-stone-950/60 border border-stone-800 rounded-lg p-4 mb-4 flex items-center justify-between">
+                <div>
+                  <div className="text-xs text-stone-500 uppercase tracking-wider">Essay</div>
+                  <div className="display-font text-2xl text-amber-400">{essayIndex + 1}<span className="text-stone-600">/{ESSAYS.length}</span></div>
+                </div>
+                <button onClick={() => setRevealedEssay(r => !r)} className="text-xs px-3 py-1.5 border border-stone-800 hover:border-amber-700 rounded-md text-stone-300 hover:text-amber-400 transition-colors">
+                  {revealedEssay ? 'Hide outline' : 'Reveal outline'}
+                </button>
+              </div>
+              <div key={essayIndex} className="bg-stone-950/60 border border-stone-800 rounded-lg p-6 sm:p-8 scale-in">
+                <h2 className="display-font text-xl sm:text-2xl text-stone-100 leading-snug mb-6 italic">{currentEssay.title}</h2>
+                {revealedEssay ? (
+                  <div className="space-y-3 slide-right">
+                    <div className="text-xs uppercase tracking-wider text-amber-500/80 mb-2">Skeleton outline</div>
+                    {currentEssay.points.map((pt, i) => (
+                      <div key={i} className="flex gap-3 items-start">
+                        <div className="flex-shrink-0 w-6 h-6 rounded-full border border-amber-700/50 text-amber-400 text-xs flex items-center justify-center mt-0.5">{i+1}</div>
+                        <p className="text-sm text-stone-300 leading-relaxed pt-0.5">{pt}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6">
+                    <p className="text-stone-500 italic mb-1">Try drafting your own outline first.</p>
+                    <p className="text-stone-600 text-sm">Then reveal to compare.</p>
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-between items-center mt-4">
+                <button onClick={() => { setEssayIndex(i => Math.max(0, i-1)); setRevealedEssay(false); }} disabled={essayIndex === 0} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  <ChevronLeft size={16} /> Previous
+                </button>
+                <button onClick={() => { setEssayIndex(i => Math.min(ESSAYS.length-1, i+1)); setRevealedEssay(false); }} disabled={essayIndex === ESSAYS.length-1} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  Next <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {mode === 'quick' && (
+            <div className="fade-in space-y-6">
+              {QUICK_REFERENCE.map(section => (
+                <div key={section.category} className="bg-stone-950/60 border border-stone-800 rounded-lg p-5 sm:p-7">
+                  <div className="flex items-center gap-2 mb-5">
+                    <div className="h-px flex-1 bg-stone-800"></div>
+                    <h3 className="display-font text-lg italic text-amber-400 px-3">{section.category}</h3>
+                    <div className="h-px flex-1 bg-stone-800"></div>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-2 sm:gap-3">
+                    {section.items.map((item, i) => (
+                      <div key={i} className="flex items-start gap-3 p-3 rounded-md border border-stone-800/50 bg-stone-900/30 hover:border-amber-800/50 hover:bg-amber-950/10 transition-colors">
+                        <div className="display-font font-medium text-amber-300 text-base sm:text-lg flex-shrink-0 min-w-[60px]">{item.label}</div>
+                        <p className="text-xs sm:text-sm text-stone-300 pt-1">{item.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <footer className="mt-12 pt-6 border-t border-stone-900 text-center">
+            <p className="text-xs text-stone-600 italic display-font">EHS 505 · Day 5 · Made by Chidinma Nwatu (The Revolutionary Educator)</p>
+          </footer>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+document.getElementById('loading').classList.add('hidden');
+</script>
+</body>
+</html>

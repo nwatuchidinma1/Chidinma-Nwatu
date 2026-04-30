@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a1410">
+<title>EHS 509 — Environmental Health Ethics & Laws</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js" crossorigin></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  html, body { background: #0f0c0a; }
+  body { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes scaleIn { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
+  @keyframes slideRight { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: translateX(0); } }
+  .fade-in { animation: fadeIn 0.4s ease-out; }
+  .scale-in { animation: scaleIn 0.3s ease-out; }
+  .slide-right { animation: slideRight 0.4s ease-out; }
+  .display-font { font-family: 'Fraunces', Georgia, serif; font-optical-sizing: auto; }
+  .grain-overlay::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 1;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3CfeColorMatrix values='0 0 0 0 0.6 0 0 0 0 0.4 0 0 0 0 0.2 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.4;
+  }
+  #loading { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; color: #d4a574; font-family: 'Fraunces', serif; font-style: italic; font-size: 18px; }
+  #loading.hidden { display: none; }
+</style>
+</head>
+<body>
+<div id="loading">loading your study pack...</div>
+<div id="root"></div>
+
+<script type="text/babel" data-type="module" data-presets="react">
+const { useState, useEffect, useMemo } = React;
+
+const Icon = ({ children, size = 18, className = '' }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
+);
+const Activity = (p) => <Icon {...p}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></Icon>;
+const RotateCcw = (p) => <Icon {...p}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></Icon>;
+const ChevronLeft = (p) => <Icon {...p}><path d="m15 18-6-6 6-6"/></Icon>;
+const ChevronRight = (p) => <Icon {...p}><path d="m9 18 6-6-6-6"/></Icon>;
+const Check = (p) => <Icon {...p}><path d="M20 6 9 17l-5-5"/></Icon>;
+const X = (p) => <Icon {...p}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></Icon>;
+const Shuffle = (p) => <Icon {...p}><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22"/><path d="m18 2 4 4-4 4"/><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2"/><path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8"/><path d="m18 14 4 4-4 4"/></Icon>;
+const BookOpen = (p) => <Icon {...p}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></Icon>;
+const Layers = (p) => <Icon {...p}><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></Icon>;
+const FileText = (p) => <Icon {...p}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></Icon>;
+const Target = (p) => <Icon {...p}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></Icon>;
+const Trophy = (p) => <Icon {...p}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></Icon>;
+
+const MCQ_BANK = [{"topic": "Ethics", "q": "Ethics is best defined as:", "options": ["Religious rules", "Moral principles governing right and wrong behaviour", "Just laws", "Just opinions"], "correct": 1, "explain": "Systematic principles guiding moral conduct."}, {"topic": "Ethics", "q": "Bioethics deals with:", "options": ["Just biology", "Ethical issues in life sciences and healthcare", "Just sports", "Music"], "correct": 1, "explain": "Bridge between biology and ethics."}, {"topic": "Ethics", "q": "Environmental ethics concerns:", "options": ["Random", "Moral relationship between humans and the environment", "Just animals", "Music"], "correct": 1, "explain": "Human responsibility toward nature."}, {"topic": "Ethics", "q": "Public health ethics balances:", "options": ["Random", "Individual rights with population health", "Just one", "Music"], "correct": 1, "explain": "Tension between liberty and collective welfare."}, {"topic": "Ethics", "q": "4 principles of biomedical ethics:", "options": ["Random", "Autonomy, Beneficence, Non-maleficence, Justice", "Just one", "Music"], "correct": 1, "explain": "Beauchamp and Childress framework."}, {"topic": "Ethics", "q": "Autonomy means:", "options": ["Random", "Respect for individual decision-making", "Force", "Music"], "correct": 1, "explain": "Self-determination right."}, {"topic": "Ethics", "q": "Beneficence means:", "options": ["Random", "Acting for the benefit of others", "Harm", "Music"], "correct": 1, "explain": "Active doing of good."}, {"topic": "Ethics", "q": "Non-maleficence means:", "options": ["Random", "Do no harm", "Always help", "Music"], "correct": 1, "explain": "First do no harm - Hippocratic principle."}, {"topic": "Ethics", "q": "Justice in ethics means:", "options": ["Random", "Fair distribution of benefits and burdens", "Just punishment", "Music"], "correct": 1, "explain": "Equity in resources and treatment."}, {"topic": "Ethics", "q": "Informed consent requires:", "options": ["Random", "Information disclosure, comprehension, voluntariness, capacity", "Just signature", "Music"], "correct": 1, "explain": "Multiple components for valid consent."}, {"topic": "Ethics", "q": "Confidentiality protects:", "options": ["Random", "Patient/subject information from unauthorised disclosure", "Public records", "Music"], "correct": 1, "explain": "Trust foundation in healthcare."}, {"topic": "Ethics", "q": "Conflicts of interest:", "options": ["Random", "Situations where personal interest may compromise professional judgment", "Just disagreements", "Music"], "correct": 1, "explain": "Threat to objectivity and trust."}, {"topic": "Ethics", "q": "Whistleblowing is:", "options": ["Random", "Reporting unethical behaviour through appropriate channels", "Just complaining", "Music"], "correct": 1, "explain": "Ethical obligation to report harm."}, {"topic": "Ethics", "q": "Utilitarianism:", "options": ["Random", "Maximising good for greatest number", "Random", "Music"], "correct": 1, "explain": "Consequentialist ethical theory."}, {"topic": "Ethics", "q": "Deontology emphasises:", "options": ["Outcomes", "Duties and rules regardless of outcomes", "Pleasure", "Random"], "correct": 1, "explain": "Kantian ethical framework."}, {"topic": "Professional", "q": "Professional ethics in environmental health includes:", "options": ["Random", "Code of conduct, standards, accountability, continuing education", "Just rules", "Music"], "correct": 1, "explain": "Multiple ethical dimensions."}, {"topic": "Professional", "q": "EHO duty includes:", "options": ["Random", "Public health protection, fairness, integrity, confidentiality", "Just inspections", "Music"], "correct": 1, "explain": "Multifaceted professional obligations."}, {"topic": "Professional", "q": "Conflict between client confidentiality and public health:", "options": ["Random", "May require disclosure to prevent harm", "Always confidential", "Music"], "correct": 1, "explain": "Public health override in serious risks."}, {"topic": "Professional", "q": "Ethical decision-making framework:", "options": ["Random", "Identify issue, gather facts, consider stakeholders, evaluate options, decide, act, reflect", "Just one step", "Music"], "correct": 1, "explain": "Structured approach to ethical dilemmas."}, {"topic": "Professional", "q": "Cultural competence:", "options": ["Random", "Awareness and respect for cultural differences in practice", "Just one culture", "Music"], "correct": 1, "explain": "Effective practice across cultures."}, {"topic": "Professional", "q": "Continuing education is:", "options": ["Optional", "Ethical obligation for professional competence", "Just convenience", "Music"], "correct": 1, "explain": "Maintains professional standards."}, {"topic": "Professional", "q": "Boundary issues:", "options": ["Random", "Maintaining appropriate professional limits", "Just walls", "Music"], "correct": 1, "explain": "Avoids exploitation and conflicts."}, {"topic": "Professional", "q": "Accountability means:", "options": ["Random", "Responsibility for one's professional actions and outcomes", "Just blame", "Music"], "correct": 1, "explain": "Owning consequences of decisions."}, {"topic": "Professional", "q": "Research ethics requires:", "options": ["Random", "Ethical review, informed consent, beneficence, justice", "Just data", "Music"], "correct": 1, "explain": "Multiple safeguards for human research."}, {"topic": "Professional", "q": "Belmont Report principles:", "options": ["Random", "Respect for persons, beneficence, justice", "Just two", "Music"], "correct": 1, "explain": "Foundation of US research ethics."}, {"topic": "Professional", "q": "Vulnerable populations in research:", "options": ["Random", "Children, prisoners, pregnant women, mentally ill, economically disadvantaged", "Just adults", "Music"], "correct": 1, "explain": "Require additional protections."}, {"topic": "Professional", "q": "Beneficence in research:", "options": ["Random", "Maximise benefits, minimise harms", "Just outcomes", "Music"], "correct": 1, "explain": "Risk-benefit balance."}, {"topic": "Professional", "q": "IRB stands for:", "options": ["Random", "Institutional Review Board", "Just initials", "Music"], "correct": 1, "explain": "Reviews research for ethical compliance."}, {"topic": "Professional", "q": "Helsinki Declaration is:", "options": ["Random", "International ethical guidelines for research involving humans", "Just one country", "Music"], "correct": 1, "explain": "World Medical Association standard."}, {"topic": "Professional", "q": "Research misconduct includes:", "options": ["Random", "Fabrication, falsification, plagiarism", "Just mistakes", "Music"], "correct": 1, "explain": "Three core categories."}, {"topic": "Authorities", "q": "In Nigeria, environmental health is regulated by:", "options": ["Just one body", "Multiple agencies including Federal Ministry of Health, NESREA, NAFDAC, EHCON", "Just NAFDAC", "Music"], "correct": 1, "explain": "Multi-agency oversight."}, {"topic": "Authorities", "q": "NESREA stands for:", "options": ["Random", "National Environmental Standards and Regulations Enforcement Agency", "Just one word", "Music"], "correct": 1, "explain": "Top federal environmental enforcement body."}, {"topic": "Authorities", "q": "NESREA was established by:", "options": ["Random", "NESREA Act 2007", "Just decree", "Music"], "correct": 1, "explain": "Replaced FEPA."}, {"topic": "Authorities", "q": "Federal Environmental Protection Agency (FEPA):", "options": ["Random", "Predecessor of NESREA", "Just acronym", "Music"], "correct": 1, "explain": "Replaced in 2007."}, {"topic": "Authorities", "q": "Federal Ministry of Environment:", "options": ["Random", "Apex environmental policy ministry", "Just one", "Music"], "correct": 1, "explain": "Federal policy and supervision."}, {"topic": "Authorities", "q": "NAFDAC oversees:", "options": ["Random", "National Agency for Food and Drug Administration and Control", "Just food", "Music"], "correct": 1, "explain": "Food, drugs, cosmetics, water, etc."}, {"topic": "Authorities", "q": "Established 1993, NAFDAC ensures:", "options": ["Random", "Quality and safety of food, drugs, cosmetics, medical devices", "Just one", "Music"], "correct": 1, "explain": "Comprehensive consumer protection."}, {"topic": "Authorities", "q": "Federal Ministry of Health:", "options": ["Random", "Apex health policy ministry", "Just one", "Music"], "correct": 1, "explain": "National health system oversight."}, {"topic": "Authorities", "q": "EHCON stands for:", "options": ["Random", "Environmental Health Officers Registration Council of Nigeria", "Just one", "Music"], "correct": 1, "explain": "Regulates environmental health profession."}, {"topic": "Authorities", "q": "EHCON's role:", "options": ["Random", "Register, license, regulate environmental health officers", "Just one", "Music"], "correct": 1, "explain": "Professional regulation body."}, {"topic": "Authorities", "q": "State Environmental Protection Agencies:", "options": ["Random", "State-level environmental protection mirroring federal", "Just federal", "Music"], "correct": 1, "explain": "Decentralised environmental governance."}, {"topic": "Authorities", "q": "Local Government in environmental health:", "options": ["Random", "Frontline service delivery, sanitation, refuse, sanitation inspections", "Just one", "Music"], "correct": 1, "explain": "Closest level to communities."}, {"topic": "Authorities", "q": "WHO role:", "options": ["Random", "International leadership and standard-setting", "National only", "Music"], "correct": 1, "explain": "World Health Organization global health authority."}, {"topic": "Authorities", "q": "International conventions:", "options": ["Random", "Frameworks like Basel, Stockholm, Rotterdam, Minamata", "Just one", "Music"], "correct": 1, "explain": "Multiple chemical/waste conventions."}, {"topic": "Authorities", "q": "Africa CDC:", "options": ["Random", "African continental disease surveillance and response", "Just one country", "Music"], "correct": 1, "explain": "African health security."}, {"topic": "Laws", "q": "Major Nigerian environmental law:", "options": ["Random", "NESREA Act 2007 and amendments", "Just one", "Music"], "correct": 1, "explain": "Foundational environmental enforcement law."}, {"topic": "Laws", "q": "EIA Act:", "options": ["Random", "Environmental Impact Assessment Act 1992", "Just one", "Music"], "correct": 1, "explain": "Mandates EIA before development projects."}, {"topic": "Laws", "q": "Hazardous Wastes Act:", "options": ["Random", "Harmful Waste (Special Criminal Provisions) Act 1988", "Just one", "Music"], "correct": 1, "explain": "Response to Koko toxic waste dumping."}, {"topic": "Laws", "q": "Water Resources Act:", "options": ["Random", "National framework for water resource management", "Just one", "Music"], "correct": 1, "explain": "Defines federal water authority."}, {"topic": "Laws", "q": "Public Health Law:", "options": ["Random", "State-level health protection laws", "Just one", "Music"], "correct": 1, "explain": "State-by-state implementation."}, {"topic": "Laws", "q": "Food Hygiene Regulations:", "options": ["Random", "Standards for food safety and handling", "Just one", "Music"], "correct": 1, "explain": "Protect consumers from foodborne disease."}, {"topic": "Laws", "q": "Sanitation regulations:", "options": ["Random", "Cover refuse, drainage, premises, public spaces", "Just one", "Music"], "correct": 1, "explain": "Comprehensive environmental sanitation."}, {"topic": "Laws", "q": "Occupational Safety and Health legislation:", "options": ["Random", "Worker protection laws like the Factories Act", "Just one", "Music"], "correct": 1, "explain": "Workplace health and safety."}, {"topic": "Laws", "q": "Tobacco Control Act:", "options": ["Random", "Restricts tobacco use, sales, advertising", "Just one", "Music"], "correct": 1, "explain": "Public health protection."}, {"topic": "Laws", "q": "Quarantine Act:", "options": ["Random", "Provides for quarantine measures during epidemics", "Just one", "Music"], "correct": 1, "explain": "Disease control through isolation."}, {"topic": "Laws", "q": "Building Code:", "options": ["Random", "Standards for construction including ventilation, sanitation", "Just one", "Music"], "correct": 1, "explain": "Healthy built environment."}, {"topic": "Laws", "q": "Pollution Prevention Acts:", "options": ["Random", "Regulate emissions and discharges", "Just one", "Music"], "correct": 1, "explain": "Source control approach."}, {"topic": "Laws", "q": "Waste Management Regulations:", "options": ["Random", "Cover collection, transport, treatment, disposal", "Just one", "Music"], "correct": 1, "explain": "Lifecycle waste management."}, {"topic": "Laws", "q": "Environmental Sanitation Regulations:", "options": ["Random", "Cover personal, food, water, refuse, vector control", "Just one", "Music"], "correct": 1, "explain": "Comprehensive environmental hygiene."}, {"topic": "Laws", "q": "International Health Regulations 2005:", "options": ["Random", "WHO framework for international response to health emergencies", "Just one country", "Music"], "correct": 1, "explain": "PHEIC designations and reporting."}, {"topic": "Policies", "q": "Policy is:", "options": ["Random", "Statement of intent and guiding principles", "Just law", "Music"], "correct": 1, "explain": "Direction setting for action."}, {"topic": "Policies", "q": "National Health Policy:", "options": ["Random", "Sets direction for health system in Nigeria", "Just one", "Music"], "correct": 1, "explain": "Strategic framework."}, {"topic": "Policies", "q": "National Environmental Health Policy:", "options": ["Random", "Strategic framework for environmental health", "Just one", "Music"], "correct": 1, "explain": "Directs environmental health activities."}, {"topic": "Policies", "q": "National Environmental Sanitation Policy 2005:", "options": ["Random", "Framework for environmental sanitation in Nigeria", "Just one", "Music"], "correct": 1, "explain": "Specific sanitation guidance."}, {"topic": "Policies", "q": "National Drug Policy:", "options": ["Random", "Framework for medicines availability, quality, use", "Just one", "Music"], "correct": 1, "explain": "Pharmaceutical sector direction."}, {"topic": "Policies", "q": "National Water Sanitation and Hygiene Policy:", "options": ["Random", "Framework for WASH services", "Just one", "Music"], "correct": 1, "explain": "Aligned with SDG 6."}, {"topic": "Policies", "q": "Climate Change Policy:", "options": ["Random", "Adaptation and mitigation framework", "Just one", "Music"], "correct": 1, "explain": "National response to climate change."}, {"topic": "Policies", "q": "Solid Waste Management Policy:", "options": ["Random", "Framework for waste reduction, reuse, recycling, disposal", "Just one", "Music"], "correct": 1, "explain": "Hierarchy of waste management."}, {"topic": "Policies", "q": "Air Quality Policy:", "options": ["Random", "Air pollution control framework", "Just one", "Music"], "correct": 1, "explain": "Ambient and indoor air protection."}, {"topic": "Policies", "q": "Tobacco Control Policy:", "options": ["Random", "Framework for reducing tobacco use", "Just one", "Music"], "correct": 1, "explain": "WHO FCTC-aligned."}, {"topic": "Enforcement", "q": "Enforcement of environmental health laws involves:", "options": ["Random", "Inspection, monitoring, abatement notices, prosecution", "Just inspection", "Music"], "correct": 1, "explain": "Multiple enforcement tools."}, {"topic": "Enforcement", "q": "Abatement notice is:", "options": ["Random", "Legal order to stop a nuisance or violation", "Just request", "Music"], "correct": 1, "explain": "Formal regulatory action."}, {"topic": "Enforcement", "q": "Closure order:", "options": ["Random", "Authority to shut down non-compliant premises", "Just warning", "Music"], "correct": 1, "explain": "Severe enforcement action."}, {"topic": "Enforcement", "q": "Prosecution requires:", "options": ["Random", "Evidence of breach and legal procedure", "Random", "Music"], "correct": 1, "explain": "Court action with due process."}, {"topic": "Enforcement", "q": "Penalties for environmental crimes:", "options": ["Random", "Fines, imprisonment, restitution, license revocation", "Just fines", "Music"], "correct": 1, "explain": "Range of sanctions."}, {"topic": "Enforcement", "q": "Polluter Pays Principle:", "options": ["Random", "Polluter bears costs of prevention and remediation", "Random", "Music"], "correct": 1, "explain": "Fundamental environmental law principle."}, {"topic": "Enforcement", "q": "Precautionary Principle:", "options": ["Random", "Take action despite scientific uncertainty when serious harm threatens", "Random", "Music"], "correct": 1, "explain": "Better safe than sorry."}, {"topic": "Enforcement", "q": "Compliance monitoring:", "options": ["Random", "Routine checks of regulated activities", "One-time", "Music"], "correct": 1, "explain": "Ongoing oversight."}, {"topic": "Enforcement", "q": "Self-monitoring:", "options": ["Random", "Industry's own measurement and reporting", "Just government", "Music"], "correct": 1, "explain": "Common compliance tool."}, {"topic": "Enforcement", "q": "Permit system:", "options": ["Random", "Authorisation with conditions before activity", "Random", "Music"], "correct": 1, "explain": "Pre-approval framework."}, {"topic": "Enforcement", "q": "License system for environmental health practitioners:", "options": ["Random", "Required for legal practice; renewed periodically", "Just paperwork", "Music"], "correct": 1, "explain": "Quality assurance for practitioners."}, {"topic": "Enforcement", "q": "Public awareness campaigns:", "options": ["Random", "Educational programs supporting compliance", "Just commercials", "Music"], "correct": 1, "explain": "Soft compliance through information."}, {"topic": "Enforcement", "q": "Citizen reporting:", "options": ["Random", "Encourages public to report violations", "Just officials", "Music"], "correct": 1, "explain": "Community participation in enforcement."}, {"topic": "Enforcement", "q": "Inter-agency coordination:", "options": ["Random", "Different agencies working together", "Just one", "Music"], "correct": 1, "explain": "Avoids duplication and gaps."}, {"topic": "Enforcement", "q": "Audit:", "options": ["Random", "Periodic review of compliance and management systems", "Just one", "Music"], "correct": 1, "explain": "Verification mechanism."}, {"topic": "Application", "q": "Koko toxic waste incident (1988) led to:", "options": ["Random", "Harmful Waste Act and FEPA establishment", "Music", "Random"], "correct": 1, "explain": "Italian toxic waste dumping in Nigeria triggered legal response."}, {"topic": "Application", "q": "Stockholm Convention:", "options": ["Random", "Persistent Organic Pollutants (POPs) treaty", "Just hosting", "Music"], "correct": 1, "explain": "Global ban on dirty dozen chemicals."}, {"topic": "Application", "q": "Basel Convention:", "options": ["Random", "Hazardous waste transboundary movement", "Just one", "Music"], "correct": 1, "explain": "Controls international waste trade."}, {"topic": "Application", "q": "Rotterdam Convention:", "options": ["Random", "Prior Informed Consent for hazardous chemicals", "Just one", "Music"], "correct": 1, "explain": "Information-sharing on chemicals."}, {"topic": "Application", "q": "Minamata Convention:", "options": ["Random", "Mercury reduction treaty", "Just one", "Music"], "correct": 1, "explain": "Named after Japanese mercury disease city."}, {"topic": "Application", "q": "Sustainable Development Goal 6:", "options": ["Random", "Clean Water and Sanitation", "Just one", "Music"], "correct": 1, "explain": "WASH as global priority."}, {"topic": "Application", "q": "Sustainable Development Goal 3:", "options": ["Random", "Good Health and Well-being", "Just one", "Music"], "correct": 1, "explain": "Health-focused SDG."}, {"topic": "Application", "q": "Sustainable Development Goal 11:", "options": ["Random", "Sustainable Cities and Communities", "Just one", "Music"], "correct": 1, "explain": "Urban sustainability focus."}, {"topic": "Application", "q": "Sustainable Development Goal 13:", "options": ["Random", "Climate Action", "Just one", "Music"], "correct": 1, "explain": "Climate-related target."}, {"topic": "Application", "q": "Hippocratic Oath:", "options": ["Random", "Ancient ethical commitment by physicians", "Just text", "Music"], "correct": 1, "explain": "Foundation of medical ethics."}, {"topic": "Application", "q": "Nuremberg Code:", "options": ["Random", "Ethical principles for human experimentation", "Just one", "Music"], "correct": 1, "explain": "Post-WW2 research ethics."}, {"topic": "Application", "q": "Tuskegee Syphilis Study:", "options": ["Random", "Major US research ethics scandal", "Random", "Music"], "correct": 1, "explain": "Led to Belmont Report."}, {"topic": "Application", "q": "Common ethical issues in environmental health practice:", "options": ["Random", "Conflicts of interest, confidentiality, dual loyalty, resource allocation", "Just one", "Music"], "correct": 1, "explain": "Multiple recurring dilemmas."}, {"topic": "Application", "q": "Environmental justice:", "options": ["Random", "Fair treatment regardless of race, color, income in environmental matters", "Random", "Music"], "correct": 1, "explain": "Addresses environmental inequities."}, {"topic": "Application", "q": "Right to a healthy environment:", "options": ["Random", "Recognised in many constitutions and international declarations", "Just one", "Music"], "correct": 1, "explain": "Emerging human rights principle."}];
+const FLASHCARDS = [{"term": "Ethics", "def": "Moral principles governing right and wrong behaviour."}, {"term": "Bioethics", "def": "Ethical issues in life sciences and healthcare."}, {"term": "Environmental Ethics", "def": "Moral relationship between humans and the environment."}, {"term": "Public Health Ethics", "def": "Balances individual rights with population health."}, {"term": "4 Biomedical Principles", "def": "Autonomy, Beneficence, Non-maleficence, Justice (Beauchamp & Childress)."}, {"term": "Autonomy", "def": "Respect for individual decision-making and self-determination."}, {"term": "Beneficence", "def": "Acting for the benefit of others - active doing of good."}, {"term": "Non-maleficence", "def": "Do no harm - first principle of Hippocratic ethics."}, {"term": "Justice", "def": "Fair distribution of benefits and burdens; equity in resources and treatment."}, {"term": "Informed Consent", "def": "Information disclosure, comprehension, voluntariness, and capacity."}, {"term": "Confidentiality", "def": "Protecting patient/subject information from unauthorised disclosure."}, {"term": "Conflict of Interest", "def": "Situations where personal interest may compromise professional judgment."}, {"term": "Whistleblowing", "def": "Reporting unethical behaviour through appropriate channels."}, {"term": "Utilitarianism", "def": "Maximising good for the greatest number - consequentialist."}, {"term": "Deontology", "def": "Duties and rules regardless of outcomes - Kantian framework."}, {"term": "Belmont Report", "def": "Foundation of US research ethics: respect for persons, beneficence, justice."}, {"term": "Nuremberg Code", "def": "Post-WW2 ethical principles for human experimentation."}, {"term": "Helsinki Declaration", "def": "World Medical Association international ethical guidelines for research."}, {"term": "IRB", "def": "Institutional Review Board - reviews research for ethical compliance."}, {"term": "Research Misconduct", "def": "Fabrication, falsification, plagiarism (FFP)."}, {"term": "Vulnerable Populations", "def": "Children, prisoners, pregnant women, mentally ill, economically disadvantaged - require additional protections."}, {"term": "NESREA", "def": "National Environmental Standards and Regulations Enforcement Agency. Established by NESREA Act 2007."}, {"term": "NAFDAC", "def": "National Agency for Food and Drug Administration and Control. Established 1993."}, {"term": "FEPA", "def": "Federal Environmental Protection Agency. Predecessor of NESREA."}, {"term": "EHCON", "def": "Environmental Health Officers Registration Council of Nigeria. Regulates EHO profession."}, {"term": "WHO", "def": "World Health Organization. International leadership and standard-setting."}, {"term": "NESREA Act 2007", "def": "Foundational Nigerian environmental enforcement law."}, {"term": "EIA Act 1992", "def": "Mandates Environmental Impact Assessment before development projects."}, {"term": "Harmful Waste Act 1988", "def": "Special Criminal Provisions Act on hazardous waste. Response to Koko incident."}, {"term": "Koko Toxic Waste (1988)", "def": "Italian toxic waste dumping in Nigeria. Led to FEPA and Harmful Waste Act."}, {"term": "Stockholm Convention", "def": "Persistent Organic Pollutants (POPs) treaty. Bans dirty dozen chemicals."}, {"term": "Basel Convention", "def": "Hazardous waste transboundary movement control."}, {"term": "Rotterdam Convention", "def": "Prior Informed Consent procedure for hazardous chemicals trade."}, {"term": "Minamata Convention", "def": "Mercury reduction treaty named after Japanese mercury disease city."}, {"term": "Polluter Pays Principle", "def": "Polluter bears the costs of prevention and remediation."}, {"term": "Precautionary Principle", "def": "Take action despite scientific uncertainty when serious harm threatens."}, {"term": "Abatement Notice", "def": "Legal order to stop a nuisance or violation."}, {"term": "Closure Order", "def": "Authority to shut down non-compliant premises."}, {"term": "Permit System", "def": "Authorisation with conditions before activity is allowed."}, {"term": "Audit", "def": "Periodic review of compliance and management systems."}, {"term": "National Environmental Sanitation Policy 2005", "def": "Nigerian framework for environmental sanitation."}, {"term": "International Health Regulations 2005", "def": "WHO framework for international response to health emergencies."}, {"term": "PHEIC", "def": "Public Health Emergency of International Concern. WHO designation under IHR."}, {"term": "SDG 3", "def": "Good Health and Well-being."}, {"term": "SDG 6", "def": "Clean Water and Sanitation."}, {"term": "SDG 11", "def": "Sustainable Cities and Communities."}, {"term": "SDG 13", "def": "Climate Action."}, {"term": "Environmental Justice", "def": "Fair treatment regardless of race, color, income in environmental matters."}, {"term": "Right to Healthy Environment", "def": "Emerging human rights principle in many constitutions and declarations."}, {"term": "Hippocratic Oath", "def": "Ancient ethical commitment by physicians. Foundation of medical ethics."}];
+const ESSAYS = [{"title": "Define ethics and discuss its application in environmental health", "points": ["Definition: moral principles", "4 biomedical principles: autonomy, beneficence, non-maleficence, justice", "Public health ethics balancing individual and population", "Environmental ethics: human-nature relationship", "Application examples: contamination cases, vulnerable groups", "Importance for trust and legitimacy"]}, {"title": "Discuss the four principles of biomedical ethics with examples", "points": ["Autonomy: informed consent, refusal of treatment", "Beneficence: vaccination programs, water treatment", "Non-maleficence: do no harm, avoid contamination", "Justice: equitable resource allocation, environmental justice", "Tensions and balancing", "Application in EHO practice"]}, {"title": "Discuss informed consent in environmental health research", "points": ["Definition: information, comprehension, voluntariness, capacity", "Belmont Report respect for persons", "Nuremberg Code", "Helsinki Declaration", "Vulnerable populations protections", "Cultural considerations", "IRB review", "Documentation"]}, {"title": "Discuss professional ethics for Environmental Health Officers", "points": ["Code of conduct", "Public health protection priority", "Confidentiality with public health override", "Conflicts of interest", "Continuing education", "Cultural competence", "Boundary issues", "Accountability", "Reporting unethical practice"]}, {"title": "Discuss the role of regulatory authorities in environmental health enforcement", "points": ["Federal Ministry of Environment", "NESREA - enforcement", "NAFDAC - food/drug", "EHCON - profession", "Federal Ministry of Health", "State EPAs and Health Ministries", "Local Government roles", "Inter-agency coordination", "Challenges in Nigeria"]}, {"title": "Discuss NESREA: establishment, functions, achievements", "points": ["NESREA Act 2007 establishment", "Replaced FEPA", "Functions: standards, enforcement, monitoring", "Inspections and prosecutions", "Major cases", "Challenges: capacity, jurisdiction, political", "Achievements", "Future directions"]}, {"title": "Discuss the establishment and functions of NAFDAC", "points": ["Establishment: 1993 Decree", "Mandate: food, drugs, cosmetics, medical devices, chemicals, water", "Functions: registration, inspection, surveillance, enforcement", "Recent achievements: anti-counterfeit", "Challenges: substandard products", "Public engagement", "International collaboration"]}, {"title": "Discuss the role of EHCON in environmental health", "points": ["Establishment: EHCON Act", "Mandate: register, license, regulate EHOs", "Functions: practice standards, ethics, discipline", "Educational accreditation", "Continuing professional development", "Code of conduct", "Disciplinary procedures", "Importance for public trust"]}, {"title": "Discuss major Nigerian environmental laws", "points": ["NESREA Act 2007: foundational enforcement", "EIA Act 1992: mandates assessment", "Harmful Waste Act 1988: post-Koko", "Water Resources Act", "Public Health Laws (state level)", "Petroleum Industry Act 2021", "Local Government Acts", "Policy framework"]}, {"title": "Discuss the EIA Act in Nigeria", "points": ["Establishment: 1992", "Mandate: assess projects before approval", "Categories I, II, III", "Procedures: notice of intent, mandatory study, report, public participation", "Decisions: 4 outcomes", "Enforcement: Ministry of Environment", "Challenges: implementation, monitoring", "Reform proposals"]}, {"title": "Discuss the Harmful Waste Act 1988 and Koko incident", "points": ["1988 Koko incident: Italian toxic waste dumping", "Environmental and health impacts", "International outcry", "Legal response: Harmful Waste Act 1988", "Establishment of FEPA", "Enforcement provisions: criminal penalties", "Lessons learned", "Subsequent improvements"]}, {"title": "Discuss international environmental conventions Nigeria has ratified", "points": ["Stockholm Convention: POPs", "Basel Convention: hazardous waste", "Rotterdam Convention: PIC", "Minamata Convention: mercury", "Bamako Convention: African hazardous waste", "Paris Agreement: climate", "Implementation in Nigeria", "Compliance challenges"]}, {"title": "Discuss policy development in environmental health", "points": ["Definition of policy", "Policy cycle: agenda, formulation, implementation, evaluation", "Stakeholders: government, civil society, private sector", "Evidence-based approach", "Major Nigerian policies: National Health Policy, Environmental Sanitation Policy 2005, WASH", "Implementation challenges", "Monitoring and review"]}, {"title": "Discuss enforcement methods in environmental health", "points": ["Inspection programs", "Permit systems", "Abatement notices", "Closure orders", "Prosecution", "Penalties: fines, imprisonment, restitution", "Compliance monitoring", "Self-monitoring", "Public engagement", "Challenges: capacity, corruption"]}, {"title": "Discuss the Polluter Pays Principle", "points": ["Definition", "OECD origin 1972", "Basis of environmental liability", "Application: clean-up costs, fines", "Strict liability for some", "Environmental insurance", "Implementation in Nigeria", "Limitations: enforcement, attribution"]}, {"title": "Discuss the Precautionary Principle", "points": ["Definition: act despite uncertainty", "Origin: Rio Declaration", "Application: emerging contaminants, climate", "Levels: weak vs strong precaution", "Critics: paralysis, costs", "Examples: chemical bans", "Risk vs precaution", "Practical implementation"]}, {"title": "Discuss the Belmont Report and research ethics", "points": ["1979 US National Commission", "Three principles", "Respect for persons: autonomy, protection of those with diminished autonomy", "Beneficence: do no harm, maximise benefits, minimise risks", "Justice: fair distribution", "Application: informed consent, risk assessment, equitable selection"]}, {"title": "Discuss vulnerable populations in environmental health", "points": ["Definition: groups with reduced ability to protect themselves", "Categories: children, elderly, pregnant women, low-income, indigenous", "Specific vulnerabilities", "Cumulative exposures", "Environmental justice", "Targeted protection: regulations, monitoring, education", "Examples: lead poisoning, air pollution"]}, {"title": "Discuss environmental justice", "points": ["Definition: fair treatment regardless of race, income", "Origin: 1980s US movement", "Toxic burden distribution", "Decision-making participation", "Examples: hazardous waste siting, refinery emissions", "Nigerian context: Niger Delta", "Federal initiatives", "Community advocacy"]}, {"title": "Discuss SDGs relevant to environmental health", "points": ["SDG 3: Good Health and Well-being", "SDG 6: Clean Water and Sanitation", "SDG 11: Sustainable Cities", "SDG 13: Climate Action", "SDG 14: Life Below Water", "SDG 15: Life on Land", "Interconnections", "Nigerian progress", "Implementation challenges"]}, {"title": "Discuss ethical dilemmas in environmental health practice", "points": ["Confidentiality vs public health", "Resource allocation", "Conflicts of interest", "Whistleblowing", "Cultural sensitivity", "Working with vulnerable groups", "Research subjects", "Decision-making framework", "Case studies"]}, {"title": "Discuss the WHO and its role in environmental health", "points": ["Establishment: 1948 UN agency", "Headquartered: Geneva", "Functions: leadership, standards, surveillance, technical support", "Major instruments: IHR 2005, FCTC", "Environmental health programs: air quality, water, sanitation", "Regional offices", "Country support", "Ethical leadership"]}, {"title": "Discuss International Health Regulations 2005", "points": ["Update of 1969 IHR", "Aim: prevent international spread of disease", "Core capacities", "PHEIC declaration", "Recent PHEICs: Ebola, Zika, COVID-19, Mpox", "Reporting obligations", "Implementation challenges", "Equity concerns"]}, {"title": "Discuss tobacco control in Nigeria", "points": ["WHO FCTC framework", "National Tobacco Control Act", "Restrictions: advertising, sales, public smoking", "Health warnings", "Taxation", "Enforcement", "Public awareness", "Industry interference", "Achievements and gaps"]}, {"title": "Discuss the role of public participation in environmental policy", "points": ["Importance: legitimacy, knowledge, equity", "Forums: hearings, consultations, citizen science", "Methods: surveys, focus groups, online platforms", "Vulnerable group inclusion", "Examples: EIA scoping, policy development", "Challenges: capacity, power imbalances", "Strengthening participation"]}];
+const QUICK_REFERENCE = [{"category": "4 Biomedical Principles", "items": [{"label": "Autonomy", "desc": "Respect for self-determination"}, {"label": "Beneficence", "desc": "Acting for benefit of others"}, {"label": "Non-maleficence", "desc": "Do no harm"}, {"label": "Justice", "desc": "Fair distribution"}]}, {"category": "Belmont Report", "items": [{"label": "Respect", "desc": "For persons - autonomy + protection"}, {"label": "Beneficence", "desc": "Maximise benefits, minimise harms"}, {"label": "Justice", "desc": "Fair selection, equitable distribution"}]}, {"category": "Nigerian Agencies", "items": [{"label": "NESREA", "desc": "Environmental enforcement (2007)"}, {"label": "NAFDAC", "desc": "Food/drug regulation (1993)"}, {"label": "EHCON", "desc": "Environmental Health Officers"}, {"label": "FEPA", "desc": "NESREA's predecessor"}, {"label": "FMOH", "desc": "Federal Ministry of Health"}, {"label": "FMOE", "desc": "Federal Ministry of Environment"}]}, {"category": "Major Nigerian Laws", "items": [{"label": "NESREA Act", "desc": "2007 - environmental enforcement"}, {"label": "EIA Act", "desc": "1992 - impact assessment"}, {"label": "Harmful Waste", "desc": "1988 - post-Koko"}, {"label": "PIA", "desc": "2021 - Petroleum Industry Act"}]}, {"category": "Key Conventions", "items": [{"label": "Stockholm", "desc": "POPs - persistent pollutants"}, {"label": "Basel", "desc": "Hazardous waste transboundary"}, {"label": "Rotterdam", "desc": "PIC for chemicals trade"}, {"label": "Minamata", "desc": "Mercury control"}, {"label": "Bamako", "desc": "African hazardous waste"}, {"label": "Paris", "desc": "Climate agreement"}]}, {"category": "Relevant SDGs", "items": [{"label": "SDG 3", "desc": "Good Health and Well-being"}, {"label": "SDG 6", "desc": "Clean Water and Sanitation"}, {"label": "SDG 11", "desc": "Sustainable Cities"}, {"label": "SDG 13", "desc": "Climate Action"}]}, {"category": "Key Principles", "items": [{"label": "Polluter Pays", "desc": "OECD 1972 - polluter bears costs"}, {"label": "Precaution", "desc": "Act under uncertainty"}, {"label": "Sustainable Dev", "desc": "Brundtland 1987"}, {"label": "Env Justice", "desc": "Fair treatment regardless of race/income"}]}];
+
+function App() {
+  const [mode, setMode] = useState('home');
+  const [topicFilter, setTopicFilter] = useState('All');
+  const [questionIndex, setQuestionIndex] = useState(0);
+  const [selected, setSelected] = useState(null);
+  const [revealed, setRevealed] = useState(false);
+  const [score, setScore] = useState({ correct: 0, total: 0 });
+  const [shuffled, setShuffled] = useState(false);
+  const [questionOrder, setQuestionOrder] = useState([]);
+  const [flashIndex, setFlashIndex] = useState(0);
+  const [flashFlipped, setFlashFlipped] = useState(false);
+  const [flashOrder, setFlashOrder] = useState([]);
+  const [essayIndex, setEssayIndex] = useState(0);
+  const [revealedEssay, setRevealedEssay] = useState(false);
+  const [showAnswer, setShowAnswer] = useState(false);
+
+  const topics = ['All', ...new Set(MCQ_BANK.map(q => q.topic))];
+
+  const filteredQuestions = useMemo(() => {
+    if (topicFilter === 'All') return MCQ_BANK;
+    return MCQ_BANK.filter(q => q.topic === topicFilter);
+  }, [topicFilter]);
+
+  const [optionMaps, setOptionMaps] = useState({});
+
+  useEffect(() => {
+    const order = filteredQuestions.map((_, i) => i);
+    const maps = {};
+    if (shuffled) {
+      for (let i = order.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [order[i], order[j]] = [order[j], order[i]];
+      }
+      // Also shuffle option order within each question
+      filteredQuestions.forEach((q, qi) => {
+        const indices = q.options.map((_, i) => i);
+        for (let i = indices.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [indices[i], indices[j]] = [indices[j], indices[i]];
+        }
+        maps[qi] = indices;
+      });
+    } else {
+      filteredQuestions.forEach((q, qi) => {
+        maps[qi] = q.options.map((_, i) => i);
+      });
+    }
+    setOptionMaps(maps);
+    setQuestionOrder(order);
+    setQuestionIndex(0);
+    setSelected(null);
+    setRevealed(false);
+    setScore({ correct: 0, total: 0 });
+  }, [topicFilter, shuffled, filteredQuestions]);
+
+  useEffect(() => { setFlashOrder(FLASHCARDS.map((_, i) => i)); }, []);
+
+  const currentQ = filteredQuestions[questionOrder[questionIndex]];
+  const currentOptionMap = currentQ ? (optionMaps[questionOrder[questionIndex]] || currentQ.options.map((_, i) => i)) : [];
+
+  const handleAnswer = (displayIdx) => {
+    if (revealed) return;
+    const realIdx = currentOptionMap[displayIdx];
+    setSelected(displayIdx);
+    setRevealed(true);
+    setScore(s => ({ correct: s.correct + (realIdx === currentQ.correct ? 1 : 0), total: s.total + 1 }));
+  };
+
+  const nextQuestion = () => {
+    if (questionIndex < questionOrder.length - 1) {
+      setQuestionIndex(i => i + 1);
+      setSelected(null);
+      setRevealed(false);
+    }
+  };
+
+  const prevQuestion = () => {
+    if (questionIndex > 0) {
+      setQuestionIndex(i => i - 1);
+      setSelected(null);
+      setRevealed(false);
+    }
+  };
+
+  const restart = () => {
+    setQuestionIndex(0);
+    setSelected(null);
+    setRevealed(false);
+    setScore({ correct: 0, total: 0 });
+  };
+
+  const shuffleFlash = () => {
+    const order = [...flashOrder];
+    for (let i = order.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+    setFlashOrder(order);
+    setFlashIndex(0);
+    setFlashFlipped(false);
+  };
+
+  const currentFlash = FLASHCARDS[flashOrder[flashIndex]];
+  const currentEssay = ESSAYS[essayIndex];
+
+  return (
+    <div className="min-h-screen text-stone-100" style={{ background: 'radial-gradient(ellipse at top, #2a1f17 0%, #1a1410 50%, #0f0c0a 100%)', fontFamily: '"Plus Jakarta Sans", -apple-system, sans-serif' }}>
+      <div className="grain-overlay">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10 relative" style={{ zIndex: 2 }}>
+
+          <header className="mb-8 sm:mb-12 fade-in">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="h-px w-8 bg-amber-600/60"></div>
+              <span className="text-xs uppercase tracking-[0.3em] text-amber-500/80">EHS 509 · Day 7</span>
+            </div>
+            <h1 className="display-font text-4xl sm:text-6xl font-medium leading-[0.95] mb-3" style={{ color: '#f5e8d0' }}>
+              Environmental Health<br/>
+              <span className="italic" style={{ color: '#d4a574' }}>Ethics & Laws</span>
+            </h1>
+            <p className="text-stone-400 text-sm sm:text-base max-w-xl">Master ethics principles, Nigerian regulatory bodies, and major environmental laws.</p>
+          </header>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-6 sm:mb-8">
+            {[
+              { id: 'home', label: 'Quiz', icon: Target, desc: MCQ_BANK.length + ' MCQs' },
+              { id: 'flash', label: 'Flashcards', icon: Layers, desc: FLASHCARDS.length + ' cards' },
+              { id: 'essay', label: 'Essays', icon: FileText, desc: ESSAYS.length + ' outlines' },
+              { id: 'quick', label: 'Quick Ref', icon: BookOpen, desc: 'Drill cards' }
+            ].map(m => {
+              const I = m.icon;
+              const active = mode === m.id;
+              return (
+                <button key={m.id} onClick={() => setMode(m.id)} className={`group relative p-3 sm:p-4 rounded-lg border transition-all text-left ${active ? 'border-amber-500/60 bg-amber-950/30' : 'border-stone-800 hover:border-stone-700 bg-stone-950/40'}`}>
+                  <I size={18} className={active ? 'text-amber-400' : 'text-stone-400'} />
+                  <div className={`mt-2 text-sm font-medium ${active ? 'text-amber-100' : 'text-stone-200'}`}>{m.label}</div>
+                  <div className="text-[10px] sm:text-xs text-stone-500 mt-0.5">{m.desc}</div>
+                </button>
+              );
+            })}
+          </div>
+
+          {mode === 'home' && currentQ && (
+            <div className="fade-in">
+              <div className="bg-stone-950/60 border border-stone-800 rounded-lg p-4 mb-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="text-xs text-stone-500 uppercase tracking-wider">Question</div>
+                    <div className="display-font text-2xl text-amber-400">{questionIndex + 1}<span className="text-stone-600">/{questionOrder.length}</span></div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <div className="text-xs text-stone-500 uppercase tracking-wider">Score</div>
+                      <div className="display-font text-2xl">
+                        <span style={{ color: score.total > 0 && score.correct/score.total >= 0.7 ? '#86efac' : '#d4a574' }}>{score.correct}</span>
+                        <span className="text-stone-600">/{score.total}</span>
+                      </div>
+                    </div>
+                    <button onClick={restart} className="p-2 hover:bg-stone-800 rounded transition-colors" title="Restart"><RotateCcw size={16} className="text-stone-400" /></button>
+                    <button onClick={() => setShuffled(s => !s)} className={`p-2 rounded transition-colors ${shuffled ? 'bg-amber-950 text-amber-400' : 'hover:bg-stone-800 text-stone-400'}`} title="Shuffle"><Shuffle size={16} /></button>
+                  </div>
+                </div>
+                <div className="h-1 bg-stone-900 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-amber-700 to-amber-500 transition-all duration-500" style={{ width: `${((questionIndex + 1) / questionOrder.length) * 100}%` }}></div>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-1.5">
+                  {topics.map(t => (
+                    <button key={t} onClick={() => setTopicFilter(t)} className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${topicFilter === t ? 'border-amber-600 bg-amber-950/50 text-amber-200' : 'border-stone-800 text-stone-400 hover:border-stone-700'}`}>{t}</button>
+                  ))}
+                </div>
+              </div>
+
+              <div key={questionIndex} className="bg-stone-950/60 border border-stone-800 rounded-lg p-5 sm:p-7 scale-in">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.2em] text-amber-500/80 px-2 py-1 rounded-full bg-amber-950/30 border border-amber-900/40">
+                    <Activity size={14} />
+                    {currentQ.topic}
+                  </span>
+                </div>
+                <h2 className="display-font text-xl sm:text-2xl text-stone-100 leading-snug mb-6">{currentQ.q}</h2>
+                <div className="space-y-2">
+                  {currentOptionMap.map((realIdx, displayIdx) => {
+                    const opt = currentQ.options[realIdx];
+                    const isCorrect = realIdx === currentQ.correct;
+                    const isSelected = selected === displayIdx;
+                    let cls = 'border-stone-800 hover:border-stone-700 bg-stone-900/30';
+                    if (revealed) {
+                      if (isCorrect) cls = 'border-emerald-700 bg-emerald-950/40 text-emerald-100';
+                      else if (isSelected && !isCorrect) cls = 'border-rose-800 bg-rose-950/40 text-rose-200';
+                      else cls = 'border-stone-800 bg-stone-950/30 opacity-50';
+                    }
+                    return (
+                      <button key={displayIdx} onClick={() => handleAnswer(displayIdx)} disabled={revealed} className={`w-full text-left p-3 sm:p-4 rounded-lg border transition-all flex items-start gap-3 ${cls}`}>
+                        <div className={`flex-shrink-0 w-7 h-7 rounded-full border flex items-center justify-center text-xs font-medium ${revealed && isCorrect ? 'border-emerald-600 bg-emerald-900 text-emerald-200' : revealed && isSelected && !isCorrect ? 'border-rose-700 bg-rose-900 text-rose-200' : 'border-stone-700 text-stone-400'}`}>
+                          {revealed && isCorrect ? <Check size={14} /> : revealed && isSelected && !isCorrect ? <X size={14} /> : ['A','B','C','D'][displayIdx]}
+                        </div>
+                        <span className="text-sm sm:text-base pt-0.5">{opt}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {revealed && (
+                  <div className="mt-5 p-4 bg-amber-950/20 border-l-2 border-amber-600/60 rounded-r-lg slide-right">
+                    <div className="text-xs uppercase tracking-wider text-amber-500/80 mb-1">Why</div>
+                    <p className="text-sm text-stone-300 leading-relaxed">{currentQ.explain}</p>
+                  </div>
+                )}
+                <div className="flex justify-between items-center mt-6">
+                  <button onClick={prevQuestion} disabled={questionIndex === 0} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                    <ChevronLeft size={16} /> Previous
+                  </button>
+                  {questionIndex === questionOrder.length - 1 && revealed ? (
+                    <div className="flex items-center gap-2 text-amber-400 text-sm">
+                      <Trophy size={16} />
+                      Final score: {score.correct}/{score.total}
+                    </div>
+                  ) : (
+                    <button onClick={nextQuestion} disabled={!revealed || questionIndex === questionOrder.length - 1} className="flex items-center gap-1.5 px-4 py-2 bg-amber-700 hover:bg-amber-600 disabled:opacity-30 disabled:cursor-not-allowed text-stone-50 rounded-md text-sm font-medium transition-colors">
+                      Next <ChevronRight size={16} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {mode === 'flash' && (
+            <div className="fade-in">
+              <div className="bg-stone-950/60 border border-stone-800 rounded-lg p-4 mb-4 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="text-xs text-stone-500 uppercase tracking-wider">Card</div>
+                  <div className="display-font text-2xl text-amber-400">{flashIndex + 1}<span className="text-stone-600">/{FLASHCARDS.length}</span></div>
+                </div>
+                <button onClick={shuffleFlash} className="flex items-center gap-1.5 px-3 py-2 text-stone-300 hover:text-amber-400 border border-stone-800 hover:border-amber-700 rounded-md text-sm transition-colors">
+                  <Shuffle size={14} /> Shuffle
+                </button>
+              </div>
+              <div key={flashIndex} onClick={() => setFlashFlipped(f => !f)} className="bg-gradient-to-br from-stone-900 to-stone-950 border border-stone-800 rounded-lg p-7 sm:p-12 min-h-[280px] sm:min-h-[340px] flex items-center justify-center cursor-pointer hover:border-amber-700/60 transition-colors scale-in">
+                <div className="text-center max-w-2xl">
+                  {!flashFlipped ? (
+                    <>
+                      <div className="text-xs uppercase tracking-[0.3em] text-amber-500/70 mb-4">Term</div>
+                      <h2 className="display-font text-3xl sm:text-4xl font-medium text-stone-100 mb-4">{currentFlash.term}</h2>
+                      <p className="text-xs text-stone-500 mt-6 italic">tap to reveal</p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-xs uppercase tracking-[0.3em] text-amber-500/70 mb-4">Definition</div>
+                      <p className="text-base sm:text-lg text-stone-200 leading-relaxed">{currentFlash.def}</p>
+                      <p className="text-xs text-stone-500 mt-6 italic">tap to flip back</p>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-between items-center mt-4">
+                <button onClick={() => { setFlashIndex(i => Math.max(0, i-1)); setFlashFlipped(false); }} disabled={flashIndex === 0} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  <ChevronLeft size={16} /> Previous
+                </button>
+                <div className="flex-1 mx-4 h-1 bg-stone-900 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-amber-700 to-amber-500" style={{ width: `${((flashIndex + 1) / FLASHCARDS.length) * 100}%` }}></div>
+                </div>
+                <button onClick={() => { setFlashIndex(i => Math.min(FLASHCARDS.length-1, i+1)); setFlashFlipped(false); }} disabled={flashIndex === FLASHCARDS.length-1} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  Next <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {mode === 'essay' && currentEssay && (
+            <div className="fade-in">
+              <div className="bg-stone-950/60 border border-stone-800 rounded-lg p-4 mb-4 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="text-xs text-stone-500 uppercase tracking-wider">Essay</div>
+                  <div className="display-font text-2xl text-amber-400">{essayIndex + 1}<span className="text-stone-600">/{ESSAYS.length}</span></div>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => setRevealedEssay(r => !r)} className="text-xs px-3 py-1.5 border border-stone-800 hover:border-amber-700 rounded-md text-stone-300 hover:text-amber-400 transition-colors">
+                    {revealedEssay ? 'Hide outline' : 'Show outline'}
+                  </button>
+                  {currentEssay.answer && (
+                    <button onClick={() => setShowAnswer(s => !s)} className={`text-xs px-3 py-1.5 border rounded-md transition-colors ${showAnswer ? 'border-amber-600 bg-amber-950/40 text-amber-300' : 'border-stone-800 hover:border-amber-700 text-stone-300 hover:text-amber-400'}`}>
+                      {showAnswer ? 'Hide answer' : 'Show full answer'}
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div key={essayIndex} className="bg-stone-950/60 border border-stone-800 rounded-lg p-6 sm:p-8 scale-in">
+                <h2 className="display-font text-xl sm:text-2xl text-stone-100 leading-snug mb-6 italic">{currentEssay.title}</h2>
+                {!revealedEssay && !showAnswer && (
+                  <div className="text-center py-6">
+                    <p className="text-stone-500 italic mb-1">Try drafting your own outline first.</p>
+                    <p className="text-stone-600 text-sm">Then reveal outline or full answer to compare.</p>
+                  </div>
+                )}
+                {revealedEssay && (
+                  <div className="space-y-3 slide-right mb-6">
+                    <div className="text-xs uppercase tracking-wider text-amber-500/80 mb-2">Skeleton outline</div>
+                    {currentEssay.points.map((pt, i) => (
+                      <div key={i} className="flex gap-3 items-start">
+                        <div className="flex-shrink-0 w-6 h-6 rounded-full border border-amber-700/50 text-amber-400 text-xs flex items-center justify-center mt-0.5">{i+1}</div>
+                        <p className="text-sm text-stone-300 leading-relaxed pt-0.5">{pt}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {showAnswer && currentEssay.answer && (
+                  <div className="slide-right pt-6 border-t border-stone-800">
+                    <div className="text-xs uppercase tracking-wider text-amber-500/80 mb-3">Sample answer</div>
+                    <div className="text-sm sm:text-base text-stone-200 leading-relaxed whitespace-pre-line">{currentEssay.answer}</div>
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-between items-center mt-4">
+                <button onClick={() => { setEssayIndex(i => Math.max(0, i-1)); setRevealedEssay(false); setShowAnswer(false); }} disabled={essayIndex === 0} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  <ChevronLeft size={16} /> Previous
+                </button>
+                <button onClick={() => { setEssayIndex(i => Math.min(ESSAYS.length-1, i+1)); setRevealedEssay(false); setShowAnswer(false); }} disabled={essayIndex === ESSAYS.length-1} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  Next <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {mode === 'quick' && (
+            <div className="fade-in space-y-6">
+              {QUICK_REFERENCE.map(section => (
+                <div key={section.category} className="bg-stone-950/60 border border-stone-800 rounded-lg p-5 sm:p-7">
+                  <div className="flex items-center gap-2 mb-5">
+                    <div className="h-px flex-1 bg-stone-800"></div>
+                    <h3 className="display-font text-lg italic text-amber-400 px-3">{section.category}</h3>
+                    <div className="h-px flex-1 bg-stone-800"></div>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-2 sm:gap-3">
+                    {section.items.map((item, i) => (
+                      <div key={i} className="flex items-start gap-3 p-3 rounded-md border border-stone-800/50 bg-stone-900/30 hover:border-amber-800/50 hover:bg-amber-950/10 transition-colors">
+                        <div className="display-font font-medium text-amber-300 text-base sm:text-lg flex-shrink-0 min-w-[60px]">{item.label}</div>
+                        <p className="text-xs sm:text-sm text-stone-300 pt-1">{item.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <footer className="mt-12 pt-6 border-t border-stone-900 text-center">
+            <p className="text-xs text-stone-600 italic display-font">EHS 509 · Day 7 · Made by Chidinma Nwatu (The Revolutionary Educator)</p>
+          </footer>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+document.getElementById('loading').classList.add('hidden');
+</script>
+</body>
+</html>

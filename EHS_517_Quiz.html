@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a1410">
+<title>EHS 517 — Biometeorology Weather × Health</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js" crossorigin></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  html, body { background: #0f0c0a; }
+  body { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes scaleIn { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
+  @keyframes slideRight { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: translateX(0); } }
+  .fade-in { animation: fadeIn 0.4s ease-out; }
+  .scale-in { animation: scaleIn 0.3s ease-out; }
+  .slide-right { animation: slideRight 0.4s ease-out; }
+  .display-font { font-family: 'Fraunces', Georgia, serif; font-optical-sizing: auto; }
+  .grain-overlay::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 1;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3CfeColorMatrix values='0 0 0 0 0.6 0 0 0 0 0.4 0 0 0 0 0.2 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.4;
+  }
+  #loading { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; color: #d4a574; font-family: 'Fraunces', serif; font-style: italic; font-size: 18px; }
+  #loading.hidden { display: none; }
+</style>
+</head>
+<body>
+<div id="loading">loading your study pack...</div>
+<div id="root"></div>
+
+<script type="text/babel" data-type="module" data-presets="react">
+const { useState, useEffect, useMemo } = React;
+
+const Icon = ({ children, size = 18, className = '' }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
+);
+const Activity = (p) => <Icon {...p}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></Icon>;
+const RotateCcw = (p) => <Icon {...p}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></Icon>;
+const ChevronLeft = (p) => <Icon {...p}><path d="m15 18-6-6 6-6"/></Icon>;
+const ChevronRight = (p) => <Icon {...p}><path d="m9 18 6-6-6-6"/></Icon>;
+const Check = (p) => <Icon {...p}><path d="M20 6 9 17l-5-5"/></Icon>;
+const X = (p) => <Icon {...p}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></Icon>;
+const Shuffle = (p) => <Icon {...p}><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22"/><path d="m18 2 4 4-4 4"/><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2"/><path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8"/><path d="m18 14 4 4-4 4"/></Icon>;
+const BookOpen = (p) => <Icon {...p}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></Icon>;
+const Layers = (p) => <Icon {...p}><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></Icon>;
+const FileText = (p) => <Icon {...p}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></Icon>;
+const Target = (p) => <Icon {...p}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></Icon>;
+const Trophy = (p) => <Icon {...p}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></Icon>;
+
+const MCQ_BANK = [{"topic": "Concept", "q": "Biometeorology is the science dealing with relationships between:", "options": ["Stocks and weather", "Music and culture", "Computers and data", "Living organisms and atmospheric phenomena"], "correct": 3, "explain": "Microbes, plants, animals + temperature, sunlight, humidity, wind."}, {"topic": "Concept", "q": "Biometeorology combines experiences in:", "options": ["Marketing and sales", "Banking and trade", "Music and dance", "Biology and meteorology"], "correct": 3, "explain": "Interdisciplinary blend of life sciences and atmospheric science."}, {"topic": "Concept", "q": "Biometeorology has become more important due to:", "options": ["Trends", "Climate change reality and devastating effects", "Music", "Sports"], "correct": 1, "explain": "Climate change makes weather-health relationships urgent."}, {"topic": "Concept", "q": "International Society of Biometeorology defines biometeorology as the science investigating effects of:", "options": ["Just weather", "Music", "Just temperature", "Geophysical and geochemical elements of atmospheric environment on living organisms"], "correct": 3, "explain": "Comprehensive scope including chemistry and physics of atmosphere."}, {"topic": "Concept", "q": "Atmospheric physical state is defined by:", "options": ["Just temperature", "Sound", "Color", "Temperature, humidity, wind speed, pressure"], "correct": 3, "explain": "Four key parameters define atmospheric state."}, {"topic": "Concept", "q": "Devastating extreme weather events include:", "options": ["Calm days", "Sunshine only", "Flooding, earthquakes, storms, wildfires", "Rainbows"], "correct": 2, "explain": "Climate change increases extreme events globally."}, {"topic": "Concept", "q": "WHO World Health Report 2002 estimated climate change responsible for:", "options": ["2.4% of worldwide diarrhoea, 6% of malaria in endemic areas", "10% of all death", "100% of disease", "All cancers"], "correct": 0, "explain": "Quantified disease burden from climate."}, {"topic": "Concept", "q": "Some health impacts of temperature change can be:", "options": ["Always negative", "Random", "Always positive", "Beneficial - milder winters reduce cold-related deaths"], "correct": 3, "explain": "Effects are not all adverse."}, {"topic": "Concept", "q": "Human biometeorology focuses on:", "options": ["Direct and indirect effects of meteorological conditions on human health", "Animals", "Plants", "Bacteria"], "correct": 0, "explain": "Specific subfield for human health."}, {"topic": "Concept", "q": "Animal biometeorology investigates:", "options": ["Music", "Methods animals use to cope with environment", "Cooking", "Stock prices"], "correct": 1, "explain": "Across fishes, amphibians, reptiles, birds, mammals."}, {"topic": "Concept", "q": "Plant biometeorology examines:", "options": ["Music", "Animals only", "Plant responses to weather and climate, growth, yield", "Random"], "correct": 2, "explain": "Important for agriculture and ecosystems."}, {"topic": "Concept", "q": "Concept of biometeorology relates to impacts of:", "options": ["Music", "Sports", "Weather and climate on human physical health, longevity, mental wellness", "Random"], "correct": 2, "explain": "Comprehensive health relationship."}, {"topic": "Concept", "q": "Biometeorology helps understand the role of:", "options": ["Music", "Sports", "Adaptation to weather phenomena to minimise negative consequences", "Random"], "correct": 2, "explain": "Adaptation strategies are central."}, {"topic": "Concept", "q": "Sudden weather changes can:", "options": ["Always heal", "Cure cancer", "Be ignored", "Trigger or exacerbate illnesses"], "correct": 3, "explain": "Headache, fever from sudden temperature shifts."}, {"topic": "Concept", "q": "Weather and climate determine:", "options": ["Music", "Random", "Sports", "Spread of pollutants in air, pathogens in water/air, vector sustenance"], "correct": 3, "explain": "Disease ecology heavily climate-driven."}, {"topic": "WeatherClimate", "q": "Weather refers to:", "options": ["Long-term patterns", "30-year averages", "Short-term atmospheric conditions", "Climate"], "correct": 2, "explain": "Day-to-day or moment-to-moment atmosphere."}, {"topic": "WeatherClimate", "q": "Climate refers to:", "options": ["Day-to-day weather", "Long-term patterns of temperature, precipitation, etc.", "One day", "One hour"], "correct": 1, "explain": "Average weather over decades."}, {"topic": "WeatherClimate", "q": "Climate change is:", "options": ["Random", "Daily fluctuation", "Monthly variation", "Systematic shift in long-term statistics of weather elements over decades"], "correct": 3, "explain": "Includes both averages and extremes."}, {"topic": "WeatherClimate", "q": "Most important influence on climate of a place:", "options": ["Latitude", "Sound", "Color", "Music"], "correct": 0, "explain": "Equatorial regions warmer than poles due to solar angle."}, {"topic": "WeatherClimate", "q": "Climate zones include:", "options": ["Tropical, subtropical, desert, savannah, temperate, polar", "Just hot and cold", "Only warm", "Only cold"], "correct": 0, "explain": "Different zones based on latitude and patterns."}, {"topic": "WeatherClimate", "q": "Coriolis force causes wind to deflect:", "options": ["No deflection", "Always right", "Always left", "Right in Northern Hemisphere, left in Southern"], "correct": 3, "explain": "Earth rotation deflects winds."}, {"topic": "WeatherClimate", "q": "Sun's energy received at Earth is:", "options": ["100% absorbed", "All reflected", "About 52% absorbed by surface, 19% by atmosphere, 29% reflected", "Half absorbed"], "correct": 2, "explain": "Energy balance breakdown."}, {"topic": "WeatherClimate", "q": "Greenhouse effect mechanism:", "options": ["Atmosphere allows incoming solar but absorbs outgoing terrestrial radiation", "Random", "Cooling", "Magnetism"], "correct": 0, "explain": "Like greenhouse glass roof."}, {"topic": "WeatherClimate", "q": "Tropics receive more heat per unit area because:", "options": ["Random", "Sound", "Color", "Sun's rays strike more perpendicular"], "correct": 3, "explain": "Solar angle effect."}, {"topic": "WeatherClimate", "q": "Atmospheric motions transfer:", "options": ["Money", "Information", "Music", "Heat from tropics to polar regions"], "correct": 3, "explain": "Without this, tropics would be much warmer."}, {"topic": "WeatherClimate", "q": "Geostrophic wind blows:", "options": ["Random", "Parallel to isobars", "Always upward", "Backwards"], "correct": 1, "explain": "At altitude, away from friction."}, {"topic": "WeatherClimate", "q": "Gradient wind results from:", "options": ["Random", "Sound", "Magnetism", "Cross-isobar flow when isobars curve around highs/lows"], "correct": 3, "explain": "Reality differs from straight isobars."}, {"topic": "WeatherClimate", "q": "Annual range of temperature is:", "options": ["Difference between mean temperatures of warmest and coldest months", "Random", "Same everywhere", "Color"], "correct": 0, "explain": "Increases with latitude."}, {"topic": "WeatherClimate", "q": "Temperature is:", "options": ["Just a number", "Inversely proportional to precipitation typically", "Always rising", "Always falling"], "correct": 1, "explain": "Lowest at periods of highest precipitation."}, {"topic": "WeatherClimate", "q": "Local climate examples:", "options": ["Sea breezes, urban heating", "Music", "Cooking", "Random"], "correct": 0, "explain": "Small-scale climate phenomena."}, {"topic": "Elements", "q": "Temperature is measured by:", "options": ["Wind vane", "Hygrometer", "Thermometer", "Barometer"], "correct": 2, "explain": "Thermometer in degrees Celsius."}, {"topic": "Elements", "q": "Sunlight is measured by:", "options": ["Photometer", "Thermometer", "Rain gauge", "Barometer"], "correct": 0, "explain": "Photometer in candela (cd)."}, {"topic": "Elements", "q": "Precipitation is measured by:", "options": ["Thermometer", "Wind vane", "Anemometer", "Rain gauge"], "correct": 3, "explain": "Rain gauge in millimetres."}, {"topic": "Elements", "q": "Humidity is measured by:", "options": ["Barometer", "Anemometer", "Hygrometer (wet/dry bulb thermometers)", "Wind vane"], "correct": 2, "explain": "Hygrometer measures water vapour."}, {"topic": "Elements", "q": "Wind speed is measured by:", "options": ["Wind vane", "Hygrometer", "Anemometer", "Barometer"], "correct": 2, "explain": "Anemometer in knots or Beaufort scale."}, {"topic": "Elements", "q": "Wind direction is measured by:", "options": ["Wind vane", "Anemometer", "Hygrometer", "Photometer"], "correct": 0, "explain": "Points of compass or degrees."}, {"topic": "Elements", "q": "Atmospheric pressure is measured by:", "options": ["Anemometer", "Hygrometer", "Barometer", "Photometer"], "correct": 2, "explain": "Barometer in hectopascals (millibars)."}, {"topic": "Elements", "q": "Temperature unit:", "options": ["Degree Celsius", "Knots", "Hectopascals", "Candela"], "correct": 0, "explain": "Or Fahrenheit / Kelvin."}, {"topic": "Elements", "q": "Wind blowing 'from' is described by:", "options": ["Wind direction", "Wind speed", "Pressure", "Temperature"], "correct": 0, "explain": "Wind direction names the source."}, {"topic": "Elements", "q": "Wind defined by:", "options": ["Just direction", "Speed AND direction", "Just speed", "Just temperature"], "correct": 1, "explain": "Both components are needed."}, {"topic": "Elements", "q": "Relative humidity unit:", "options": ["Knots", "mm", "% of water vapour holdable at temperature", "°C"], "correct": 2, "explain": "Percentage of saturation capacity."}, {"topic": "Elements", "q": "Beaufort scale measures:", "options": ["Pressure", "Temperature", "Wind speed", "Humidity"], "correct": 2, "explain": "Empirical wind speed scale."}, {"topic": "Elements", "q": "Trace gases include:", "options": ["Just oxygen", "Just water", "Just nitrogen", "CO2 (about 0.04%), other small components"], "correct": 3, "explain": "Small atmospheric concentrations."}, {"topic": "Elements", "q": "Air composition by volume:", "options": ["100% oxygen", "50/50", "78% nitrogen, 21% oxygen, others", "Just water"], "correct": 2, "explain": "Plus argon, CO2, water vapour, etc."}, {"topic": "Elements", "q": "Major atmospheric circulation is split into:", "options": ["1 cell", "Just trade winds", "Random", "Multiple circulation cells defining pressure zones"], "correct": 3, "explain": "Hadley, Ferrel, Polar cells."}, {"topic": "Indices", "q": "Epidemiology is the study of:", "options": ["Music", "Distribution and determinants of health-related states", "Sports", "Cooking"], "correct": 1, "explain": "Population health science."}, {"topic": "Indices", "q": "Three main measures in epidemiology:", "options": ["Music, sports, art", "Profit, loss, revenue", "Rate, Ratio, Proportion", "Color, sound, light"], "correct": 2, "explain": "Different ways to express disease occurrence."}, {"topic": "Indices", "q": "Rate measures:", "options": ["Occurrence of disease/death/events in a population during given time", "Music", "Sports", "Color"], "correct": 0, "explain": "Most important tool for measuring disease."}, {"topic": "Indices", "q": "Proportion is:", "options": ["Music", "Relationship between part and whole; numerator IS in denominator", "Sports", "Random"], "correct": 1, "explain": "Usually expressed as percentage."}, {"topic": "Indices", "q": "Ratio is:", "options": ["Relation in size between two quantities; numerator NOT in denominator", "Music", "Sports", "Random"], "correct": 0, "explain": "Expressed as X:Y or X/Y."}, {"topic": "Indices", "q": "Prevalence is:", "options": ["Proportion of population with a condition at a specified point", "New cases", "Future cases", "Random"], "correct": 0, "explain": "Includes old and new cases together."}, {"topic": "Indices", "q": "Point prevalence:", "options": ["All time", "Past", "Future", "Cases at a given point in time"], "correct": 3, "explain": "Snapshot at single moment."}, {"topic": "Indices", "q": "Period prevalence:", "options": ["Cases during a specified period", "Single moment", "Future", "Color"], "correct": 0, "explain": "Over a time interval."}, {"topic": "Indices", "q": "Incidence rate measures:", "options": ["All cases", "Future", "NEW cases of disease in population at risk during specified time", "Color"], "correct": 2, "explain": "Frequency of new infections."}, {"topic": "Indices", "q": "For rare diseases:", "options": ["Random", "Always equal", "Prevalence ≈ Incidence × Duration", "Inverse"], "correct": 2, "explain": "Useful approximation in stationary populations."}, {"topic": "Indices", "q": "Mean intensity (parasitology) is:", "options": ["Average parasites per INFECTED host", "Total parasites", "Average per all hosts", "Random"], "correct": 0, "explain": "Only counts infected hosts in average."}, {"topic": "Indices", "q": "Mean abundance (parasitology) is:", "options": ["Total parasites", "Random", "Just infected", "Average parasites per host EXAMINED (infected or not)"], "correct": 3, "explain": "Counts all hosts in average."}, {"topic": "Indices", "q": "Cause inference requires eliminating:", "options": ["Music", "Sports", "Chance, bias, and confounding", "Random"], "correct": 2, "explain": "Before claiming causation."}, {"topic": "Indices", "q": "Bias is:", "options": ["Random", "Music", "Systematic error from selection criteria", "Color"], "correct": 2, "explain": "Systematically different sample."}, {"topic": "Indices", "q": "Confounding occurs when:", "options": ["Effects of two exposures aren't separated", "Random", "Music", "Sports"], "correct": 0, "explain": "One factor erroneously credited for another's effect."}, {"topic": "Altitude", "q": "Altitude is:", "options": ["Vertical distance / height above sea level", "Width", "Length", "Color"], "correct": 0, "explain": "Object height above sea level."}, {"topic": "Altitude", "q": "Mount Everest height:", "options": ["1000m", "8,850m", "100m", "20,000m"], "correct": 1, "explain": "Highest point on Earth."}, {"topic": "Altitude", "q": "High altitude classification:", "options": ["0-100m", "1500-3500m", "Below sea", "Above space"], "correct": 1, "explain": "Health-implications classification."}, {"topic": "Altitude", "q": "Hypoxia means:", "options": ["Lack of oxygen", "Too much oxygen", "Too much CO2", "Too cold"], "correct": 0, "explain": "At altitude, fewer oxygen molecules in same air volume."}, {"topic": "Altitude", "q": "Altitude sickness occurs above:", "options": ["Sea level", "2,500m", "100m", "20,000m"], "correct": 1, "explain": "Hypobaric hypoxia threshold."}, {"topic": "Altitude", "q": "Altitude sickness symptoms include:", "options": ["Just sneezing", "Just hiccups", "Tiredness, headache, dizziness, nausea, insomnia", "Just laughter"], "correct": 2, "explain": "Multiple non-specific symptoms."}, {"topic": "Altitude", "q": "AMS stands for:", "options": ["Altitude Music Society", "Average Mountain Speed", "Always Mild Symptoms", "Acute Mountain Sickness"], "correct": 3, "explain": "Common altitude illness."}, {"topic": "Altitude", "q": "AMS cardinal symptom:", "options": ["Headache (bitemporal, throbbing, worse at night)", "Cough", "Hiccups", "Sneezing"], "correct": 0, "explain": "Required for AMS diagnosis."}, {"topic": "Altitude", "q": "HACE stands for:", "options": ["High Altitude Music", "Healthy Air Climate", "High-Altitude Cerebral Oedema", "Hot Air Cold Earth"], "correct": 2, "explain": "Brain swelling - medical emergency."}, {"topic": "Altitude", "q": "HAPE stands for:", "options": ["High Altitude Music", "High-Altitude Pulmonary Oedema", "Healthy Air", "Hot Air"], "correct": 1, "explain": "Lung swelling - medical emergency."}, {"topic": "Altitude", "q": "HAPE symptoms include:", "options": ["Cough productive of pink frothy sputum, dyspnea", "Just laughter", "Just running", "Just energy"], "correct": 0, "explain": "Pulmonary oedema signs."}, {"topic": "Altitude", "q": "Best treatment for severe altitude illness:", "options": ["Stay", "Immediate descent", "Climb higher", "Random"], "correct": 1, "explain": "Descend 500-1000m as primary treatment."}, {"topic": "Altitude", "q": "Drug of choice for AMS prophylaxis:", "options": ["Aspirin", "Acetazolamide", "Penicillin", "Atropine"], "correct": 1, "explain": "Carbonic anhydrase inhibitor."}, {"topic": "Altitude", "q": "Excellent drug for HACE:", "options": ["Dexamethasone", "Aspirin", "Penicillin", "Antihistamine"], "correct": 0, "explain": "Steroid lifesaving in HACE."}, {"topic": "Altitude", "q": "Acclimatisation rule:", "options": ["At >3000m, don't sleep more than 300m higher than previous night", "Random", "Climb fast", "Random"], "correct": 0, "explain": "Gradual ascent prevents illness."}, {"topic": "Maritime", "q": "Oceanic climate features:", "options": ["Hot summers, cold winters", "Always cold", "Always hot", "Warm not hot summers, cool not cold winters"], "correct": 3, "explain": "Mild temperatures from ocean buffering."}, {"topic": "Maritime", "q": "Oceanic climate predominates in:", "options": ["Sahara", "Antarctica", "Western Europe", "Just Asia"], "correct": 2, "explain": "West coasts at mid-latitudes."}, {"topic": "Maritime", "q": "Köppen Cfb is:", "options": ["Desert", "Typical oceanic climate", "Tropical", "Polar"], "correct": 1, "explain": "Standard oceanic climate classification."}, {"topic": "Maritime", "q": "Coldest month in marine climate:", "options": ["Below -50°C", "Random", "Below -100°C", "0°C or higher"], "correct": 3, "explain": "Mild winters defining feature."}, {"topic": "Maritime", "q": "Warmest month in marine climate:", "options": ["Below 0°C", "Above 50°C", "Below 22°C", "Random"], "correct": 2, "explain": "Cool summers defining feature."}, {"topic": "Maritime", "q": "Turbulence in oceans is:", "options": ["Always bad", "Magnetic", "Useless", "Generally good for ocean organisms"], "correct": 3, "explain": "Mixing supports marine life and climate."}, {"topic": "Maritime", "q": "Reynolds number measures:", "options": ["Music", "Color", "Sports", "Turbulence intensity"], "correct": 3, "explain": "Ratio between inertial and viscous forces."}, {"topic": "Maritime", "q": "Subtropical highland climate:", "options": ["Random", "Variation of oceanic climate at high altitudes in tropics/subtropics", "Same as desert", "Polar"], "correct": 1, "explain": "At least one month cooler than 18°C."}, {"topic": "Maritime", "q": "Mediterranean climate (Csb):", "options": ["Wet summer", "Always rain", "Dry summer", "Always snow"], "correct": 2, "explain": "Distinguishing dry summer."}, {"topic": "Tools", "q": "GIS is:", "options": ["Music", "Computer-based tool for mapping and analysing geographic features", "Sports", "Random"], "correct": 1, "explain": "Spatial analysis system."}, {"topic": "Tools", "q": "GIS uses:", "options": ["Random", "Spatial analysis of meteorological data", "Music", "Sports"], "correct": 1, "explain": "Quantify, find patterns, predict outcomes."}, {"topic": "Tools", "q": "GIS main ideas:", "options": ["Create geographic data, manage in database, analyse, find patterns, provide information", "Random", "Cook food", "Sports"], "correct": 0, "explain": "Workflow for spatial decision support."}, {"topic": "Tools", "q": "Symptom is:", "options": ["Lab result", "Subjective evidence of disease", "Test", "Image"], "correct": 1, "explain": "In patient's mind/feelings."}, {"topic": "Tools", "q": "Sign is:", "options": ["Symptom", "Music", "Objective evidence of disease (visible/feelable)", "Random"], "correct": 2, "explain": "Can be observed externally."}, {"topic": "Tools", "q": "Test (in diagnosis) is:", "options": ["Random", "Lab examination for specific signs/reactions", "Music", "Sports"], "correct": 1, "explain": "Eggs, antibodies, antigens, etc."}, {"topic": "Concept", "q": "Climate-sensitive infectious diseases include:", "options": ["Random", "Malaria, dengue, cholera, schistosomiasis, meningitis", "Just colds", "Music"], "correct": 1, "explain": "Multiple diseases shaped by weather/climate patterns."}, {"topic": "Concept", "q": "Heatwaves cause excess mortality especially in:", "options": ["Athletes", "Elderly, infants, chronic disease patients", "Just children", "Random"], "correct": 1, "explain": "Vulnerable populations have less thermoregulatory reserve."}, {"topic": "WeatherClimate", "q": "El Niño Southern Oscillation (ENSO) affects:", "options": ["Just Pacific", "Global weather patterns including African rainfall, malaria epidemics", "Music", "Sports"], "correct": 1, "explain": "Major climate driver beyond Pacific region."}, {"topic": "Elements", "q": "Wet-bulb temperature measures:", "options": ["Just air temp", "Music", "Random", "Effective temperature considering humidity - human heat stress"], "correct": 3, "explain": "35°C wet-bulb is human survivability limit."}, {"topic": "Indices", "q": "Crude mortality rate is:", "options": ["Random", "Total deaths divided by total population in a given period", "Just deaths", "Music"], "correct": 1, "explain": "Often expressed per 1,000 or 100,000 population."}, {"topic": "Indices", "q": "Age-specific mortality rate:", "options": ["Random", "Deaths in a specific age group divided by population in that age group", "Total deaths", "Music"], "correct": 1, "explain": "Allows fair comparison across populations with different age structures."}, {"topic": "Altitude", "q": "Mountain hypoxia is worse during:", "options": ["Day", "Music", "Random", "Sleep due to reduced ventilation"], "correct": 3, "explain": "Periodic breathing and apnea common at altitude."}, {"topic": "Altitude", "q": "Pulse oximetry at altitude:", "options": ["Random", "Music", "Useless", "Used to monitor oxygen saturation; SpO2 falls with altitude"], "correct": 3, "explain": "Useful for triaging severity of altitude illness."}, {"topic": "Maritime", "q": "Sea breezes blow:", "options": ["Random", "Always sea to land", "From sea to land during day, land to sea at night", "Music"], "correct": 2, "explain": "Driven by differential heating of land vs water."}, {"topic": "Tools", "q": "Climate index examples:", "options": ["Universal Thermal Climate Index (UTCI), Discomfort Index", "Random", "Music", "Sports"], "correct": 0, "explain": "Combine multiple parameters into single bioclimate measure."}];
+const FLASHCARDS = [{"term": "Biometeorology", "def": "Science dealing with relationships between living organisms and atmospheric phenomena."}, {"term": "Weather", "def": "Short-term atmospheric conditions; behaviour at any given moment."}, {"term": "Climate", "def": "Long-term patterns of weather; average over decades."}, {"term": "Climate Change", "def": "Systematic shift in long-term statistics of weather elements over decades."}, {"term": "4 Atmospheric Parameters", "def": "Temperature, humidity, wind speed, pressure."}, {"term": "Coriolis Force", "def": "Earth's rotation deflects winds: right in Northern Hemisphere, left in Southern."}, {"term": "Geostrophic Wind", "def": "Wind blowing parallel to isobars at altitude."}, {"term": "Gradient Wind", "def": "Cross-isobar flow when isobars curve around highs and lows."}, {"term": "Annual Range", "def": "Difference between mean temperatures of warmest and coldest months. Increases with latitude."}, {"term": "Greenhouse Effect", "def": "Atmosphere allows incoming solar radiation but absorbs outgoing terrestrial radiation."}, {"term": "Solar Energy Distribution", "def": "52% absorbed by surface, 19% by atmosphere, 29% reflected back to space."}, {"term": "Temperature Measurement", "def": "Thermometer in degrees Celsius."}, {"term": "Sunlight Measurement", "def": "Photometer in candela (cd)."}, {"term": "Precipitation Measurement", "def": "Rain gauge in millimetres."}, {"term": "Humidity Measurement", "def": "Hygrometer (wet/dry bulb thermometers); relative humidity in %."}, {"term": "Wind Speed Measurement", "def": "Anemometer in knots or Beaufort scale."}, {"term": "Wind Direction Measurement", "def": "Wind vane; points of compass or degrees."}, {"term": "Pressure Measurement", "def": "Barometer in hectopascals (millibars)."}, {"term": "Epidemiology", "def": "Study of distribution and determinants of health-related states in populations."}, {"term": "3 Disease Measures", "def": "Rate, Ratio, Proportion."}, {"term": "Rate", "def": "Occurrence of disease/death/events in population during given time."}, {"term": "Ratio", "def": "Relation in size between two quantities; numerator NOT in denominator."}, {"term": "Proportion", "def": "Relationship part to whole; numerator IS in denominator. Usually expressed as percentage."}, {"term": "Prevalence", "def": "Proportion of population affected by a condition at specified time."}, {"term": "Point Prevalence", "def": "Cases at a given point in time."}, {"term": "Period Prevalence", "def": "Cases during a specified period."}, {"term": "Incidence Rate", "def": "NEW cases of disease in population at risk during specified time."}, {"term": "Prevalence ≈ Incidence × Duration", "def": "For rare diseases in stationary populations."}, {"term": "Mean Intensity", "def": "Average parasites per INFECTED host."}, {"term": "Mean Abundance", "def": "Average parasites per host EXAMINED (infected or not)."}, {"term": "Bias", "def": "Systematic error from selection criteria."}, {"term": "Confounding", "def": "Effects of two exposures not properly separated."}, {"term": "Cause Inference", "def": "Process of establishing cause-effect relationship; must eliminate chance, bias, confounding."}, {"term": "Hypoxia", "def": "Lack of oxygen. Occurs at altitude due to lower pressure spreading O2 molecules apart."}, {"term": "AMS", "def": "Acute Mountain Sickness - headache + symptoms after altitude gain >2500m."}, {"term": "HACE", "def": "High-Altitude Cerebral Oedema - brain swelling. Medical emergency."}, {"term": "HAPE", "def": "High-Altitude Pulmonary Oedema - lung swelling. Medical emergency."}, {"term": "AMS Treatment", "def": "Halt ascent, descend if persists, acetazolamide, NSAIDs for headache."}, {"term": "HACE Treatment", "def": "Immediate descent, oxygen, dexamethasone (lifesaving)."}, {"term": "HAPE Treatment", "def": "Immediate descent, oxygen, nifedipine."}, {"term": "Acetazolamide", "def": "Drug of choice for AMS prophylaxis. Carbonic anhydrase inhibitor."}, {"term": "Acclimatisation Rule", "def": "At >3000m, don't sleep >300m higher than previous night. Rest day every 2-3 days."}, {"term": "Oceanic Climate", "def": "Mild climate of west coasts at mid-latitudes; warm not hot summers, cool not cold winters."}, {"term": "Köppen Cfb", "def": "Typical oceanic climate classification."}, {"term": "Subtropical Highland Climate", "def": "Variation of oceanic climate at high altitudes in tropics/subtropics."}, {"term": "Reynolds Number", "def": "Dimensionless quantity measuring turbulence intensity (ratio of inertial to viscous forces)."}, {"term": "GIS", "def": "Geographic Information System - computer-based tool for mapping and analysing geographic features."}, {"term": "Symptom", "def": "Subjective evidence of disease - in patient's mind/feelings."}, {"term": "Sign", "def": "Objective evidence of disease - can be seen or felt externally."}, {"term": "Diagnostic Test", "def": "Lab examination for specific signs/reactions associated with disease."}];
+const ESSAYS = [{"title": "Define biometeorology and discuss its scope", "points": ["Definition (ISB): science investigating effects of geophysical/geochemical elements of atmosphere on living organisms", "Combines biology and meteorology", "Scope: weather/atmosphere on health, insects, pathogens, animals, agriculture, modelling", "Importance amid climate change", "Three subdivisions: human, animal, plant biometeorology"]}, {"title": "Explain the difference between weather and climate", "points": ["Weather: short-term atmospheric conditions, day-to-day, hour-to-hour", "Climate: long-term patterns over decades", "Average weather' definition of climate", "Climate change: systematic shift over decades", "Local vs regional vs global climate scales", "Most important influence: latitude", "Climate zones"]}, {"title": "Discuss the meteorological elements and their measurement", "points": ["Temperature - thermometer, °C", "Sunlight - photometer, candela", "Precipitation - rain gauge, mm", "Humidity - hygrometer, % relative", "Wind speed - anemometer, knots", "Wind direction - wind vane, compass points", "Atmospheric pressure - barometer, hPa/mb", "Why these matter for health"]}, {"title": "Discuss human biometeorology and its applications", "points": ["Definition: direct/indirect effects of meteorology on human health", "Temperature effects: vasodilation/constriction, body's HVAC", "Pollution and urban concentration", "Sunstroke, frostbite obvious connections", "Less direct: arthritis, fibromyalgia, sinus, migraine and barometric pressure", "Allergies during pollen seasons", "Mental health and weather"]}, {"title": "Discuss animal biometeorology", "points": ["Definition", "Methods animals use to cope: behaviour, physiology, migration", "Examples: corn snakes double-clutching, iguana breeding seasons", "Effect of dry/wet season patterns", "Pet response to environmental cues", "Domestic animal production", "Wildlife conservation"]}, {"title": "Explain plant biometeorology", "points": ["Definition", "Influence of weather on growth, yield, phenology", "Crop modelling and management", "Irrigation management", "Climate change effects", "Green areas and human health benefits", "Urban heat island reduction by green spaces", "Pollination and pollen seasons"]}, {"title": "Discuss indices of disease measurement in epidemiology", "points": ["Three measures: rate, ratio, proportion", "Rate: occurrence over time", "Ratio: relation between two quantities (numerator NOT in denominator)", "Proportion: part to whole (numerator IS in denominator)", "Prevalence: existing cases (point and period)", "Incidence: new cases", "Prevalence ≈ Incidence × Duration for rare diseases"]}, {"title": "Calculate and interpret prevalence rate", "points": ["Definition: proportion affected at specified time", "Point prevalence: at given point", "Period prevalence: during specified period", "Formula: cases / population at risk × 100", "Worked example with malaria", "Factors affecting: disease nature, diagnostic criteria", "Compare with incidence"]}, {"title": "Calculate and interpret incidence rate", "points": ["Definition: new cases in population at risk during specified time", "Critical element: NEW cases", "Formula: new cases / population at risk × 1000", "Worked example", "Why incidence preferred for etiology and prevention", "Relationship with prevalence"]}, {"title": "Discuss biometeorology of high-altitude environments", "points": ["Altitude classification: surface, high, very high, extreme", "Hypoxia: cause of altitude sickness", "Symptoms: tiredness, headache, dizziness, nausea, insomnia", "AMS, HACE, HAPE described", "Treatment principles: descent, oxygen, drugs", "Prevention: gradual ascent, acetazolamide", "Risk groups"]}, {"title": "Describe Acute Mountain Sickness clinical presentation, mechanisms, treatment", "points": ["Definition: AMS related to recent altitude gain", "Symptoms: headache (cardinal), nausea, vomiting, insomnia, dizziness, fatigue", "Lake Louise Scoring System", "Pathophysiology: hypoventilation, gas exchange impairment, fluid retention, sympathetic drive", "Treatment: halt ascent, acclimatisation, NSAIDs, promethazine", "Severe cases need descent", "Acetazolamide prophylaxis"]}, {"title": "Describe HACE: clinical presentation and management", "points": ["Definition: continuum of AMS, brain swelling", "Diagnosis: ataxia + AMS, or ataxia + mental status changes", "Symptoms: confusion, drowsiness, stupor, coma", "Pulse oximetry: exaggerated hypoxemia", "Treatment: emergency descent 600m+, oxygen, acetazolamide 250mg bd, dexamethasone", "Mortality if untreated", "Prevention: graded ascent"]}, {"title": "Describe HAPE: clinical presentation, mechanisms, treatment", "points": ["Definition: lung swelling at altitude", "Onset: 2-4 days, often second night", "Symptoms: nonproductive cough → pink frothy sputum, dyspnea", "Mechanisms: pulmonary hypertension, capillary stress failure, disturbed alveolar fluid clearance", "Treatment: descent 500-1000m, oxygen, nifedipine 30mg slow-release", "Prevention: gradual ascent, acetazolamide, nifedipine for at-risk individuals"]}, {"title": "Discuss biometeorology of sea and coastal areas", "points": ["Maritime/oceanic climate definition", "Where: west coasts mid-latitudes", "Temperature: cool but not cold winters, warm but not hot summers", "Köppen Cfb classification", "Precipitation: adequate, reliable, year-round", "Subtropical highland variation", "Effects on health and lifestyle", "Ocean turbulence"]}, {"title": "Discuss the application of GIS in biometeorology", "points": ["Definition: computer-based mapping/analysis system", "Spatial analysis of meteorological data", "Quantifying patterns, predicting outcomes", "Applications: disease mapping, climate-disease links, vector distribution", "Visualisation", "Decision support", "Integration with weather data", "Examples: malaria mapping, heat wave response"]}, {"title": "Discuss the establishment of cause-effect relationships in biometeorology", "points": ["Definition: cause inference", "Eliminate chance, bias, confounding first", "Direction of link: cause precedes disease", "Strength of correlation", "Dose-response (more exposure = stronger effect)", "Examples: climate-meningitis links", "Concentration of tropical diseases in tropics", "Methodological issues"]}, {"title": "Discuss climate change and its health impacts", "points": ["Definition: systematic shift in weather statistics", "Causes: natural and human", "Health impacts: heatwaves, storms, flooding, diseases", "WHO 2002 estimates: 2.4% diarrhoea, 6% malaria", "Some impacts beneficial: milder winters", "Vulnerable populations: poor, children, elderly", "Mitigation and adaptation", "Role of biometeorology"]}, {"title": "Discuss the energy balance of the Earth", "points": ["Solar energy received", "Distribution: 52% surface, 19% atmosphere, 29% reflected", "Greenhouse effect mechanism", "Atmospheric circulation transferring heat from tropics to poles", "Annual range: difference between warmest/coldest months", "Latitude effects", "Coriolis force and wind patterns"]}, {"title": "Explain effects of weather on common diseases", "points": ["Arthritis and barometric pressure", "Allergies and pollen", "Heat-related illness", "Cold-related illness", "Vector-borne diseases (malaria, dengue)", "Waterborne diseases (cholera)", "Respiratory infections", "Mental health and seasonal patterns"]}, {"title": "Discuss the Köppen climate classification system", "points": ["Purpose: systematic climate categorisation", "Main letters: A (tropical), B (dry), C (temperate), D (cold), E (polar)", "Subcategories: f (no dry season), s (dry summer), w (dry winter), b (warm summer)", "Examples: Cfb (oceanic), Csb (Mediterranean)", "Use in biometeorology and ecology", "Limitations and modifications"]}, {"title": "Discuss bias and confounding in epidemiologic studies", "points": ["Bias: systematic error from selection criteria", "Examples of bias: selecting only tall children, exposure-based selection", "Confounding: effects of two exposures conflated", "Example: dust on asthma confounded by age", "Strategies to reduce: randomisation, matching, stratification, multivariable analysis", "Importance for valid inference", "Reporting requirements"]}, {"title": "Describe the structure and function of the atmosphere", "points": ["Layers: troposphere, stratosphere, mesosphere, thermosphere, exosphere", "Composition: 78% N, 21% O, 1% argon, trace gases including CO2", "Water vapour variable", "Functions: protection from radiation, climate regulation, oxygen supply", "Atmospheric circulation cells", "Pressure systems", "Importance for life"]}, {"title": "Discuss adaptation strategies to climate variability", "points": ["Definition: adjustments minimising negative consequences", "Physiological: thermoregulation, blood vessel response", "Behavioural: clothing, shelter, schedule changes", "Cultural: housing design, dietary patterns", "Technological: HVAC, refrigeration", "Public health: vaccination, vector control", "Vulnerable groups need extra protection", "Examples"]}, {"title": "Discuss diagnosis: signs, symptoms, and tests", "points": ["Symptom: subjective evidence in patient's mind/feelings", "Sign: objective evidence visible/felt externally", "Tests: lab examinations for specific reactions", "Diagnostic criteria", "Sensitivity vs specificity affecting prevalence estimation", "Importance of accurate diagnosis", "Examples in biometeorological diseases"]}, {"title": "Discuss the importance of biometeorology in environmental health", "points": ["Predicting disease patterns", "Vector control strategies", "Heat wave response", "Air pollution health linkages", "Sustainable urban planning", "Climate adaptation policies", "Public health surveillance", "Personal protection guidance", "Future research priorities"]}];
+const QUICK_REFERENCE = [{"category": "Meteorological Instruments", "items": [{"label": "Thermometer", "desc": "Temperature in °C"}, {"label": "Photometer", "desc": "Sunlight in candela"}, {"label": "Rain Gauge", "desc": "Precipitation in mm"}, {"label": "Hygrometer", "desc": "Humidity in % RH"}, {"label": "Anemometer", "desc": "Wind speed in knots"}, {"label": "Wind Vane", "desc": "Wind direction"}, {"label": "Barometer", "desc": "Pressure in hPa"}]}, {"category": "Disease Indices", "items": [{"label": "Rate", "desc": "Disease occurrence over time"}, {"label": "Ratio", "desc": "Numerator NOT in denominator"}, {"label": "Proportion", "desc": "Part to whole, expressed as %"}, {"label": "Point Prev", "desc": "Cases at a given point"}, {"label": "Period Prev", "desc": "Cases over a time interval"}, {"label": "Incidence", "desc": "NEW cases per time"}]}, {"category": "Altitude Levels", "items": [{"label": "Surface", "desc": "0-1500m"}, {"label": "High", "desc": "1500-3500m"}, {"label": "Very High", "desc": "3500-5500m"}, {"label": "Extreme", "desc": ">5500m"}, {"label": "AMS Onset", "desc": ">2500m"}]}, {"category": "Altitude Diseases", "items": [{"label": "AMS", "desc": "Headache + symptoms"}, {"label": "HACE", "desc": "Brain oedema, ataxia, mental changes"}, {"label": "HAPE", "desc": "Lung oedema, frothy sputum"}]}, {"category": "Altitude Drugs", "items": [{"label": "Acetazolamide", "desc": "AMS prophylaxis 250mg bd"}, {"label": "Dexamethasone", "desc": "HACE - 8-10mg IM/IV"}, {"label": "Nifedipine", "desc": "HAPE - 30mg slow release q12h"}]}, {"category": "Air Composition", "items": [{"label": "78%", "desc": "Nitrogen"}, {"label": "21%", "desc": "Oxygen"}, {"label": "0.93%", "desc": "Argon"}, {"label": "0.04%", "desc": "CO2"}, {"label": "variable", "desc": "Water vapour 0.01-4.24%"}]}, {"category": "Solar Energy", "items": [{"label": "52%", "desc": "Absorbed by surface"}, {"label": "19%", "desc": "Absorbed by atmosphere"}, {"label": "29%", "desc": "Reflected to space"}]}];
+
+function App() {
+  const [mode, setMode] = useState('home');
+  const [topicFilter, setTopicFilter] = useState('All');
+  const [questionIndex, setQuestionIndex] = useState(0);
+  const [selected, setSelected] = useState(null);
+  const [revealed, setRevealed] = useState(false);
+  const [score, setScore] = useState({ correct: 0, total: 0 });
+  const [shuffled, setShuffled] = useState(false);
+  const [questionOrder, setQuestionOrder] = useState([]);
+  const [flashIndex, setFlashIndex] = useState(0);
+  const [flashFlipped, setFlashFlipped] = useState(false);
+  const [flashOrder, setFlashOrder] = useState([]);
+  const [essayIndex, setEssayIndex] = useState(0);
+  const [revealedEssay, setRevealedEssay] = useState(false);
+  const [showAnswer, setShowAnswer] = useState(false);
+
+  const topics = ['All', ...new Set(MCQ_BANK.map(q => q.topic))];
+
+  const filteredQuestions = useMemo(() => {
+    if (topicFilter === 'All') return MCQ_BANK;
+    return MCQ_BANK.filter(q => q.topic === topicFilter);
+  }, [topicFilter]);
+
+  const [optionMaps, setOptionMaps] = useState({});
+
+  useEffect(() => {
+    const order = filteredQuestions.map((_, i) => i);
+    const maps = {};
+    if (shuffled) {
+      for (let i = order.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [order[i], order[j]] = [order[j], order[i]];
+      }
+      // Also shuffle option order within each question
+      filteredQuestions.forEach((q, qi) => {
+        const indices = q.options.map((_, i) => i);
+        for (let i = indices.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [indices[i], indices[j]] = [indices[j], indices[i]];
+        }
+        maps[qi] = indices;
+      });
+    } else {
+      filteredQuestions.forEach((q, qi) => {
+        maps[qi] = q.options.map((_, i) => i);
+      });
+    }
+    setOptionMaps(maps);
+    setQuestionOrder(order);
+    setQuestionIndex(0);
+    setSelected(null);
+    setRevealed(false);
+    setScore({ correct: 0, total: 0 });
+  }, [topicFilter, shuffled, filteredQuestions]);
+
+  useEffect(() => { setFlashOrder(FLASHCARDS.map((_, i) => i)); }, []);
+
+  const currentQ = filteredQuestions[questionOrder[questionIndex]];
+  const currentOptionMap = currentQ ? (optionMaps[questionOrder[questionIndex]] || currentQ.options.map((_, i) => i)) : [];
+
+  const handleAnswer = (displayIdx) => {
+    if (revealed) return;
+    const realIdx = currentOptionMap[displayIdx];
+    setSelected(displayIdx);
+    setRevealed(true);
+    setScore(s => ({ correct: s.correct + (realIdx === currentQ.correct ? 1 : 0), total: s.total + 1 }));
+  };
+
+  const nextQuestion = () => {
+    if (questionIndex < questionOrder.length - 1) {
+      setQuestionIndex(i => i + 1);
+      setSelected(null);
+      setRevealed(false);
+    }
+  };
+
+  const prevQuestion = () => {
+    if (questionIndex > 0) {
+      setQuestionIndex(i => i - 1);
+      setSelected(null);
+      setRevealed(false);
+    }
+  };
+
+  const restart = () => {
+    setQuestionIndex(0);
+    setSelected(null);
+    setRevealed(false);
+    setScore({ correct: 0, total: 0 });
+  };
+
+  const shuffleFlash = () => {
+    const order = [...flashOrder];
+    for (let i = order.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+    setFlashOrder(order);
+    setFlashIndex(0);
+    setFlashFlipped(false);
+  };
+
+  const currentFlash = FLASHCARDS[flashOrder[flashIndex]];
+  const currentEssay = ESSAYS[essayIndex];
+
+  return (
+    <div className="min-h-screen text-stone-100" style={{ background: 'radial-gradient(ellipse at top, #2a1f17 0%, #1a1410 50%, #0f0c0a 100%)', fontFamily: '"Plus Jakarta Sans", -apple-system, sans-serif' }}>
+      <div className="grain-overlay">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10 relative" style={{ zIndex: 2 }}>
+
+          <header className="mb-8 sm:mb-12 fade-in">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="h-px w-8 bg-amber-600/60"></div>
+              <span className="text-xs uppercase tracking-[0.3em] text-amber-500/80">EHS 517 · Day 5a</span>
+            </div>
+            <h1 className="display-font text-4xl sm:text-6xl font-medium leading-[0.95] mb-3" style={{ color: '#f5e8d0' }}>
+              Biometeorology<br/>
+              <span className="italic" style={{ color: '#d4a574' }}>Weather × Health</span>
+            </h1>
+            <p className="text-stone-400 text-sm sm:text-base max-w-xl">How atmosphere affects living organisms. Master weather elements, disease indices, altitude illnesses.</p>
+          </header>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-6 sm:mb-8">
+            {[
+              { id: 'home', label: 'Quiz', icon: Target, desc: MCQ_BANK.length + ' MCQs' },
+              { id: 'flash', label: 'Flashcards', icon: Layers, desc: FLASHCARDS.length + ' cards' },
+              { id: 'essay', label: 'Essays', icon: FileText, desc: ESSAYS.length + ' outlines' },
+              { id: 'quick', label: 'Quick Ref', icon: BookOpen, desc: 'Drill cards' }
+            ].map(m => {
+              const I = m.icon;
+              const active = mode === m.id;
+              return (
+                <button key={m.id} onClick={() => setMode(m.id)} className={`group relative p-3 sm:p-4 rounded-lg border transition-all text-left ${active ? 'border-amber-500/60 bg-amber-950/30' : 'border-stone-800 hover:border-stone-700 bg-stone-950/40'}`}>
+                  <I size={18} className={active ? 'text-amber-400' : 'text-stone-400'} />
+                  <div className={`mt-2 text-sm font-medium ${active ? 'text-amber-100' : 'text-stone-200'}`}>{m.label}</div>
+                  <div className="text-[10px] sm:text-xs text-stone-500 mt-0.5">{m.desc}</div>
+                </button>
+              );
+            })}
+          </div>
+
+          {mode === 'home' && currentQ && (
+            <div className="fade-in">
+              <div className="bg-stone-950/60 border border-stone-800 rounded-lg p-4 mb-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="text-xs text-stone-500 uppercase tracking-wider">Question</div>
+                    <div className="display-font text-2xl text-amber-400">{questionIndex + 1}<span className="text-stone-600">/{questionOrder.length}</span></div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <div className="text-xs text-stone-500 uppercase tracking-wider">Score</div>
+                      <div className="display-font text-2xl">
+                        <span style={{ color: score.total > 0 && score.correct/score.total >= 0.7 ? '#86efac' : '#d4a574' }}>{score.correct}</span>
+                        <span className="text-stone-600">/{score.total}</span>
+                      </div>
+                    </div>
+                    <button onClick={restart} className="p-2 hover:bg-stone-800 rounded transition-colors" title="Restart"><RotateCcw size={16} className="text-stone-400" /></button>
+                    <button onClick={() => setShuffled(s => !s)} className={`p-2 rounded transition-colors ${shuffled ? 'bg-amber-950 text-amber-400' : 'hover:bg-stone-800 text-stone-400'}`} title="Shuffle"><Shuffle size={16} /></button>
+                  </div>
+                </div>
+                <div className="h-1 bg-stone-900 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-amber-700 to-amber-500 transition-all duration-500" style={{ width: `${((questionIndex + 1) / questionOrder.length) * 100}%` }}></div>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-1.5">
+                  {topics.map(t => (
+                    <button key={t} onClick={() => setTopicFilter(t)} className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${topicFilter === t ? 'border-amber-600 bg-amber-950/50 text-amber-200' : 'border-stone-800 text-stone-400 hover:border-stone-700'}`}>{t}</button>
+                  ))}
+                </div>
+              </div>
+
+              <div key={questionIndex} className="bg-stone-950/60 border border-stone-800 rounded-lg p-5 sm:p-7 scale-in">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.2em] text-amber-500/80 px-2 py-1 rounded-full bg-amber-950/30 border border-amber-900/40">
+                    <Activity size={14} />
+                    {currentQ.topic}
+                  </span>
+                </div>
+                <h2 className="display-font text-xl sm:text-2xl text-stone-100 leading-snug mb-6">{currentQ.q}</h2>
+                <div className="space-y-2">
+                  {currentOptionMap.map((realIdx, displayIdx) => {
+                    const opt = currentQ.options[realIdx];
+                    const isCorrect = realIdx === currentQ.correct;
+                    const isSelected = selected === displayIdx;
+                    let cls = 'border-stone-800 hover:border-stone-700 bg-stone-900/30';
+                    if (revealed) {
+                      if (isCorrect) cls = 'border-emerald-700 bg-emerald-950/40 text-emerald-100';
+                      else if (isSelected && !isCorrect) cls = 'border-rose-800 bg-rose-950/40 text-rose-200';
+                      else cls = 'border-stone-800 bg-stone-950/30 opacity-50';
+                    }
+                    return (
+                      <button key={displayIdx} onClick={() => handleAnswer(displayIdx)} disabled={revealed} className={`w-full text-left p-3 sm:p-4 rounded-lg border transition-all flex items-start gap-3 ${cls}`}>
+                        <div className={`flex-shrink-0 w-7 h-7 rounded-full border flex items-center justify-center text-xs font-medium ${revealed && isCorrect ? 'border-emerald-600 bg-emerald-900 text-emerald-200' : revealed && isSelected && !isCorrect ? 'border-rose-700 bg-rose-900 text-rose-200' : 'border-stone-700 text-stone-400'}`}>
+                          {revealed && isCorrect ? <Check size={14} /> : revealed && isSelected && !isCorrect ? <X size={14} /> : ['A','B','C','D'][displayIdx]}
+                        </div>
+                        <span className="text-sm sm:text-base pt-0.5">{opt}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {revealed && (
+                  <div className="mt-5 p-4 bg-amber-950/20 border-l-2 border-amber-600/60 rounded-r-lg slide-right">
+                    <div className="text-xs uppercase tracking-wider text-amber-500/80 mb-1">Why</div>
+                    <p className="text-sm text-stone-300 leading-relaxed">{currentQ.explain}</p>
+                  </div>
+                )}
+                <div className="flex justify-between items-center mt-6">
+                  <button onClick={prevQuestion} disabled={questionIndex === 0} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                    <ChevronLeft size={16} /> Previous
+                  </button>
+                  {questionIndex === questionOrder.length - 1 && revealed ? (
+                    <div className="flex items-center gap-2 text-amber-400 text-sm">
+                      <Trophy size={16} />
+                      Final score: {score.correct}/{score.total}
+                    </div>
+                  ) : (
+                    <button onClick={nextQuestion} disabled={!revealed || questionIndex === questionOrder.length - 1} className="flex items-center gap-1.5 px-4 py-2 bg-amber-700 hover:bg-amber-600 disabled:opacity-30 disabled:cursor-not-allowed text-stone-50 rounded-md text-sm font-medium transition-colors">
+                      Next <ChevronRight size={16} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {mode === 'flash' && (
+            <div className="fade-in">
+              <div className="bg-stone-950/60 border border-stone-800 rounded-lg p-4 mb-4 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="text-xs text-stone-500 uppercase tracking-wider">Card</div>
+                  <div className="display-font text-2xl text-amber-400">{flashIndex + 1}<span className="text-stone-600">/{FLASHCARDS.length}</span></div>
+                </div>
+                <button onClick={shuffleFlash} className="flex items-center gap-1.5 px-3 py-2 text-stone-300 hover:text-amber-400 border border-stone-800 hover:border-amber-700 rounded-md text-sm transition-colors">
+                  <Shuffle size={14} /> Shuffle
+                </button>
+              </div>
+              <div key={flashIndex} onClick={() => setFlashFlipped(f => !f)} className="bg-gradient-to-br from-stone-900 to-stone-950 border border-stone-800 rounded-lg p-7 sm:p-12 min-h-[280px] sm:min-h-[340px] flex items-center justify-center cursor-pointer hover:border-amber-700/60 transition-colors scale-in">
+                <div className="text-center max-w-2xl">
+                  {!flashFlipped ? (
+                    <>
+                      <div className="text-xs uppercase tracking-[0.3em] text-amber-500/70 mb-4">Term</div>
+                      <h2 className="display-font text-3xl sm:text-4xl font-medium text-stone-100 mb-4">{currentFlash.term}</h2>
+                      <p className="text-xs text-stone-500 mt-6 italic">tap to reveal</p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-xs uppercase tracking-[0.3em] text-amber-500/70 mb-4">Definition</div>
+                      <p className="text-base sm:text-lg text-stone-200 leading-relaxed">{currentFlash.def}</p>
+                      <p className="text-xs text-stone-500 mt-6 italic">tap to flip back</p>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-between items-center mt-4">
+                <button onClick={() => { setFlashIndex(i => Math.max(0, i-1)); setFlashFlipped(false); }} disabled={flashIndex === 0} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  <ChevronLeft size={16} /> Previous
+                </button>
+                <div className="flex-1 mx-4 h-1 bg-stone-900 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-amber-700 to-amber-500" style={{ width: `${((flashIndex + 1) / FLASHCARDS.length) * 100}%` }}></div>
+                </div>
+                <button onClick={() => { setFlashIndex(i => Math.min(FLASHCARDS.length-1, i+1)); setFlashFlipped(false); }} disabled={flashIndex === FLASHCARDS.length-1} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  Next <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {mode === 'essay' && currentEssay && (
+            <div className="fade-in">
+              <div className="bg-stone-950/60 border border-stone-800 rounded-lg p-4 mb-4 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="text-xs text-stone-500 uppercase tracking-wider">Essay</div>
+                  <div className="display-font text-2xl text-amber-400">{essayIndex + 1}<span className="text-stone-600">/{ESSAYS.length}</span></div>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => setRevealedEssay(r => !r)} className="text-xs px-3 py-1.5 border border-stone-800 hover:border-amber-700 rounded-md text-stone-300 hover:text-amber-400 transition-colors">
+                    {revealedEssay ? 'Hide outline' : 'Show outline'}
+                  </button>
+                  {currentEssay.answer && (
+                    <button onClick={() => setShowAnswer(s => !s)} className={`text-xs px-3 py-1.5 border rounded-md transition-colors ${showAnswer ? 'border-amber-600 bg-amber-950/40 text-amber-300' : 'border-stone-800 hover:border-amber-700 text-stone-300 hover:text-amber-400'}`}>
+                      {showAnswer ? 'Hide answer' : 'Show full answer'}
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div key={essayIndex} className="bg-stone-950/60 border border-stone-800 rounded-lg p-6 sm:p-8 scale-in">
+                <h2 className="display-font text-xl sm:text-2xl text-stone-100 leading-snug mb-6 italic">{currentEssay.title}</h2>
+                {!revealedEssay && !showAnswer && (
+                  <div className="text-center py-6">
+                    <p className="text-stone-500 italic mb-1">Try drafting your own outline first.</p>
+                    <p className="text-stone-600 text-sm">Then reveal outline or full answer to compare.</p>
+                  </div>
+                )}
+                {revealedEssay && (
+                  <div className="space-y-3 slide-right mb-6">
+                    <div className="text-xs uppercase tracking-wider text-amber-500/80 mb-2">Skeleton outline</div>
+                    {currentEssay.points.map((pt, i) => (
+                      <div key={i} className="flex gap-3 items-start">
+                        <div className="flex-shrink-0 w-6 h-6 rounded-full border border-amber-700/50 text-amber-400 text-xs flex items-center justify-center mt-0.5">{i+1}</div>
+                        <p className="text-sm text-stone-300 leading-relaxed pt-0.5">{pt}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {showAnswer && currentEssay.answer && (
+                  <div className="slide-right pt-6 border-t border-stone-800">
+                    <div className="text-xs uppercase tracking-wider text-amber-500/80 mb-3">Sample answer</div>
+                    <div className="text-sm sm:text-base text-stone-200 leading-relaxed whitespace-pre-line">{currentEssay.answer}</div>
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-between items-center mt-4">
+                <button onClick={() => { setEssayIndex(i => Math.max(0, i-1)); setRevealedEssay(false); setShowAnswer(false); }} disabled={essayIndex === 0} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  <ChevronLeft size={16} /> Previous
+                </button>
+                <button onClick={() => { setEssayIndex(i => Math.min(ESSAYS.length-1, i+1)); setRevealedEssay(false); setShowAnswer(false); }} disabled={essayIndex === ESSAYS.length-1} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  Next <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {mode === 'quick' && (
+            <div className="fade-in space-y-6">
+              {QUICK_REFERENCE.map(section => (
+                <div key={section.category} className="bg-stone-950/60 border border-stone-800 rounded-lg p-5 sm:p-7">
+                  <div className="flex items-center gap-2 mb-5">
+                    <div className="h-px flex-1 bg-stone-800"></div>
+                    <h3 className="display-font text-lg italic text-amber-400 px-3">{section.category}</h3>
+                    <div className="h-px flex-1 bg-stone-800"></div>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-2 sm:gap-3">
+                    {section.items.map((item, i) => (
+                      <div key={i} className="flex items-start gap-3 p-3 rounded-md border border-stone-800/50 bg-stone-900/30 hover:border-amber-800/50 hover:bg-amber-950/10 transition-colors">
+                        <div className="display-font font-medium text-amber-300 text-base sm:text-lg flex-shrink-0 min-w-[60px]">{item.label}</div>
+                        <p className="text-xs sm:text-sm text-stone-300 pt-1">{item.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <footer className="mt-12 pt-6 border-t border-stone-900 text-center">
+            <p className="text-xs text-stone-600 italic display-font">EHS 517 · Day 5a · Made by Chidinma Nwatu (The Revolutionary Educator)</p>
+          </footer>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+document.getElementById('loading').classList.add('hidden');
+</script>
+</body>
+</html>

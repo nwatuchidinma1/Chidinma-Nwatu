@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a1410">
+<title>EHS 507 — Environmental Health Lab Practice I</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js" crossorigin></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  html, body { background: #0f0c0a; }
+  body { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes scaleIn { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
+  @keyframes slideRight { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: translateX(0); } }
+  .fade-in { animation: fadeIn 0.4s ease-out; }
+  .scale-in { animation: scaleIn 0.3s ease-out; }
+  .slide-right { animation: slideRight 0.4s ease-out; }
+  .display-font { font-family: 'Fraunces', Georgia, serif; font-optical-sizing: auto; }
+  .grain-overlay::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 1;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3CfeColorMatrix values='0 0 0 0 0.6 0 0 0 0 0.4 0 0 0 0 0.2 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.4;
+  }
+  #loading { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; color: #d4a574; font-family: 'Fraunces', serif; font-style: italic; font-size: 18px; }
+  #loading.hidden { display: none; }
+</style>
+</head>
+<body>
+<div id="loading">loading your study pack...</div>
+<div id="root"></div>
+
+<script type="text/babel" data-type="module" data-presets="react">
+const { useState, useEffect, useMemo } = React;
+
+const Icon = ({ children, size = 18, className = '' }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
+);
+const Activity = (p) => <Icon {...p}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></Icon>;
+const RotateCcw = (p) => <Icon {...p}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></Icon>;
+const ChevronLeft = (p) => <Icon {...p}><path d="m15 18-6-6 6-6"/></Icon>;
+const ChevronRight = (p) => <Icon {...p}><path d="m9 18 6-6-6-6"/></Icon>;
+const Check = (p) => <Icon {...p}><path d="M20 6 9 17l-5-5"/></Icon>;
+const X = (p) => <Icon {...p}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></Icon>;
+const Shuffle = (p) => <Icon {...p}><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22"/><path d="m18 2 4 4-4 4"/><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2"/><path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8"/><path d="m18 14 4 4-4 4"/></Icon>;
+const BookOpen = (p) => <Icon {...p}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></Icon>;
+const Layers = (p) => <Icon {...p}><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></Icon>;
+const FileText = (p) => <Icon {...p}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></Icon>;
+const Target = (p) => <Icon {...p}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></Icon>;
+const Trophy = (p) => <Icon {...p}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></Icon>;
+
+const MCQ_BANK = [{"topic": "EIA", "q": "EIA is carried out:", "options": ["After completion", "During construction", "Before a project rolls out", "Annually"], "correct": 2, "explain": "EIA is predictive, BEFORE the project starts."}, {"topic": "EIA", "q": "Three main functions of EIA:", "options": ["Plan, Build, Demolish", "Predict, Avoid, Enhance", "Predict, Pollute, Profit", "Plan, Predict, Print"], "correct": 1, "explain": "Predict problems, avoid them, enhance positive effects."}, {"topic": "EIA", "q": "Which is NOT a step in EIA process?", "options": ["Screening", "Scoping", "Procurement", "Audit"], "correct": 2, "explain": "5 steps: Screening, Scoping, Prediction & Mitigation, Management & Monitoring, Audit."}, {"topic": "EIA", "q": "EIA output document is:", "options": ["Audit Report", "Environmental Impact Statement (EIS)", "Compliance Note", "Tax Return"], "correct": 1, "explain": "EIS contains plan for managing environmental impacts."}, {"topic": "EIA", "q": "Delphi technique used for:", "options": ["Site selection", "Projecting changes via expert consensus", "Sampling water", "Selecting personnel"], "correct": 1, "explain": "Expert consensus for impact prediction."}, {"topic": "EIA", "q": "Public participation most active in:", "options": ["Screening", "Scoping", "Audit", "Documentation"], "correct": 1, "explain": "Scoping involves community to identify critical issues."}, {"topic": "EIA", "q": "Which is NOT a possible EIA decision?", "options": ["Proceed without modification", "Proceed with conditions", "New EIS required", "Permanent ban on proponent"], "correct": 3, "explain": "Four outcomes: proceed, with conditions, new EIS, do not proceed."}, {"topic": "EIA", "q": "EIA impacts can be:", "options": ["Only positive", "Only negative", "Positive, negative, reversible, irreversible, short or long-term", "Only short-term"], "correct": 2, "explain": "Multi-dimensional impacts."}, {"topic": "EIA", "q": "Screening results in:", "options": ["Final report", "Categorisation, decision on full EIA need", "Public meeting", "Cost estimate"], "correct": 1, "explain": "Determines if full EIA is needed."}, {"topic": "EIA", "q": "Most EIA work concentrates on:", "options": ["Personal projects", "Development projects (dams, highways, power)", "Small businesses", "Schools"], "correct": 1, "explain": "Major infrastructure projects."}, {"topic": "EIA", "q": "EIA advantage:", "options": ["Adds delay", "Costly", "Systematic approach, improved design", "Limits options"], "correct": 2, "explain": "Provides structured methodology."}, {"topic": "EIA", "q": "EIA disadvantage:", "options": ["Improves design", "Adds complexity, delay, cost", "Provides feedback", "Avoids surprises"], "correct": 1, "explain": "Multidisciplinary, slow, expensive."}, {"topic": "EIA", "q": "In Nigeria, EIA Review Panel nominated by:", "options": ["State Governor", "EIA Division of FEPA / NESREA", "Project proponent", "Communities"], "correct": 1, "explain": "Federal/State Environmental Protection bodies."}, {"topic": "EIA", "q": "Audit step in EIA serves:", "options": ["Approval", "Feedback and learning", "Compliance", "Marketing"], "correct": 1, "explain": "Post-implementation review for future improvement."}, {"topic": "EIA", "q": "Field techniques in EIA include:", "options": ["Stock market", "Site reconnaissance, baseline data, sampling, public consultation", "Translation", "Marketing"], "correct": 1, "explain": "On-site data collection."}, {"topic": "EIA", "q": "Air sampling parameters:", "options": ["Wind speed only", "PM10, PM2.5, SO2, NOx, CO, Pb, ozone, benzene", "Just visibility", "Just smell"], "correct": 1, "explain": "Comprehensive air quality."}, {"topic": "EIA", "q": "Water biological parameter:", "options": ["pH", "BOD", "MPN total coliform per 100 ml", "TDS"], "correct": 2, "explain": "MPN method for biological coliform count."}, {"topic": "EIA", "q": "Sensitive locations include:", "options": ["Bus stops", "National parks, reserved forests, sanctuaries", "Markets", "Banks"], "correct": 1, "explain": "Areas needing extra protection."}, {"topic": "EIA", "q": "Mitigation measures include:", "options": ["Promotion", "Reduction, modification, compensation, replacement", "Sales", "Marketing"], "correct": 1, "explain": "Strategies to reduce adverse impacts."}, {"topic": "EIA", "q": "Sustainable development means:", "options": ["Fast development", "Meeting present needs without damaging future", "Cheap development", "Profit-only"], "correct": 1, "explain": "Brundtland: balance present and future."}, {"topic": "EAD", "q": "Environmental Audit is:", "options": ["Predicting future", "Reviewing compliance post-implementation", "Designing projects", "Drafting proposals"], "correct": 1, "explain": "Retrospective compliance review."}, {"topic": "EAD", "q": "EAD differs from EIA:", "options": ["Same purpose", "EAD post-implementation, EIA pre", "EAD theoretical", "EIA more important"], "correct": 1, "explain": "Timing distinguishes them."}, {"topic": "EAD", "q": "Compliance audit checks:", "options": ["Performance", "Adherence to laws and regulations", "Energy use", "Sales"], "correct": 1, "explain": "Verifies legal compliance."}, {"topic": "EAD", "q": "Pre-acquisition audit is for:", "options": ["Government", "Due diligence before buying property/facility", "Marketing", "Sales"], "correct": 1, "explain": "Identifies environmental liabilities before purchase."}, {"topic": "EAD", "q": "EAD field techniques include:", "options": ["Office only", "Site inspection, checklists, interviews, sampling, photos", "Reading reports", "Just paperwork"], "correct": 1, "explain": "On-site verification."}, {"topic": "EAD", "q": "EAD benefits:", "options": ["More accidents", "Compliance, savings, performance, reputation", "Higher costs", "Less efficiency"], "correct": 1, "explain": "Multiple positive outcomes."}, {"topic": "EAD", "q": "ISO 14001 requires:", "options": ["No audits", "Regular environmental audits", "Just paperwork", "Annual ceremonies"], "correct": 1, "explain": "Audits maintain certification."}, {"topic": "EAD", "q": "Waste audit tracks:", "options": ["Sales", "Waste generation and disposal", "Profits", "Customers"], "correct": 1, "explain": "Identifies waste streams."}, {"topic": "EAD", "q": "Energy audit assesses:", "options": ["Lighting only", "Energy use and efficiency", "Sales", "Marketing"], "correct": 1, "explain": "Identifies inefficiencies."}, {"topic": "EAD", "q": "Performance audit measures:", "options": ["Compliance only", "Progress against environmental objectives", "Sales targets", "Customer satisfaction"], "correct": 1, "explain": "Tracks improvement against goals."}, {"topic": "ES", "q": "Environmental Statement is:", "options": ["Audit report", "Detailed document presenting EIA findings", "Insurance policy", "Tax return"], "correct": 1, "explain": "Output document of EIA."}, {"topic": "ES", "q": "ES non-technical summary is for:", "options": ["Engineers", "General public", "Lawyers", "Investors"], "correct": 1, "explain": "Plain language for everyone."}, {"topic": "ES", "q": "ES alternatives section:", "options": ["Backup plans", "Alternative project options considered", "Spare parts", "Substitute managers"], "correct": 1, "explain": "Documents alternatives and choices."}, {"topic": "ES", "q": "ES components:", "options": ["Sales pitch", "Project description, baseline, methodology, impacts, mitigation, alternatives, EMP", "Marketing", "Financials"], "correct": 1, "explain": "Comprehensive technical document."}, {"topic": "ES", "q": "Residual impacts in ES:", "options": ["Major impacts", "What remains after mitigation", "Optional", "Speculation"], "correct": 1, "explain": "Impacts that cannot be fully mitigated."}, {"topic": "HIA", "q": "HIA stands for:", "options": ["Hospital Inspection Agency", "Health Impact Assessment", "Hazard Investigation Authority", "Healthcare Insurance Audit"], "correct": 1, "explain": "Estimates effects on population health."}, {"topic": "HIA", "q": "HIA core values:", "options": ["Democracy, Equity, Sustainable development, Ethical evidence", "Profit, Power, Production, Productivity", "Justice, Liberty, Equality, Fraternity", "Speed, Strength, Stability, Safety"], "correct": 0, "explain": "DESE - the four pillars."}, {"topic": "HIA", "q": "HIA stages:", "options": ["3", "4", "6", "10"], "correct": 2, "explain": "Screening, Scoping, Appraisal, Recommendations, Implementation, Monitoring."}, {"topic": "HIA", "q": "First HIA stage:", "options": ["Implementation", "Screening", "Appraisal", "Monitoring"], "correct": 1, "explain": "Decide if full HIA needed."}, {"topic": "HIA", "q": "HIA appraisal uses:", "options": ["Quantitative only", "Qualitative only", "Mixed methods", "Just opinions"], "correct": 2, "explain": "Combines numbers with stakeholder views."}, {"topic": "HIA", "q": "HIA examples:", "options": ["Hospitals only", "Motorway, airport, waste, housing, traffic", "Schools only", "Factories only"], "correct": 1, "explain": "Wide range of policies and projects."}, {"topic": "HIA", "q": "HIA focuses on:", "options": ["Disease only", "Social and environmental justice with health", "Statistics", "Money"], "correct": 1, "explain": "Equity and justice central."}, {"topic": "HIA", "q": "HIA is participatory because:", "options": ["Excludes public", "Multi-disciplinary with public participation", "Just experts", "Government only"], "correct": 1, "explain": "Community input is core."}, {"topic": "RS", "q": "Remote sensing acquires info:", "options": ["Through touch", "Without physical contact", "Through dissection", "Through chemicals"], "correct": 1, "explain": "From a distance, no contact."}, {"topic": "RS", "q": "Active RS example:", "options": ["Optical satellite", "Photographic film", "Radar and LiDAR", "Solar panels"], "correct": 2, "explain": "Active sensors emit own energy."}, {"topic": "RS", "q": "Five RS components:", "options": ["Sun, Earth, Moon, Stars, Sky", "Energy source, Sensor, Platform, Target, Interpreter", "Camera, Map, Compass, GPS, User", "Light, Air, Water, Land, Life"], "correct": 1, "explain": "The 5 essential elements."}, {"topic": "RS", "q": "LANDSAT is:", "options": ["Pesticide", "Earth resources satellite (USA)", "Skimmer", "Radiation detector"], "correct": 1, "explain": "USA Earth observation satellite."}, {"topic": "RS", "q": "Passive RS uses:", "options": ["Artificial energy", "Natural energy (sunlight, thermal)", "Sound waves", "Magnetic fields"], "correct": 1, "explain": "Naturally available energy."}, {"topic": "RS", "q": "Active RS advantage:", "options": ["Cheap", "Day/night, any season operation", "Simple", "No interpretation needed"], "correct": 1, "explain": "Self-illuminates."}, {"topic": "RS", "q": "RS applications:", "options": ["Military only", "Weather, land-use, watersheds, disasters", "Agriculture only", "Mining only"], "correct": 1, "explain": "Wide civilian and military uses."}, {"topic": "RS", "q": "Photogrammetry enables:", "options": ["Hearing", "Reliable measurements and topographic mapping", "Smell", "Taste"], "correct": 1, "explain": "Aerial photo measurement."}, {"topic": "RS", "q": "INSAT is from:", "options": ["USA", "India", "Russia", "China"], "correct": 1, "explain": "Indian National Satellite system."}, {"topic": "RS", "q": "Microwave sensing works in:", "options": ["Clear weather only", "Adverse: haze, light rain, clouds, smoke", "Daytime only", "Night only"], "correct": 1, "explain": "Major advantage over optical."}, {"topic": "GIS", "q": "GIS components:", "options": ["3", "5", "7", "10"], "correct": 1, "explain": "People, Hardware, Software, Data, Applications."}, {"topic": "GIS", "q": "NOT a GIS component:", "options": ["People", "Hardware", "Software", "Pesticides"], "correct": 3, "explain": "Pesticides are not part of GIS."}, {"topic": "GIS", "q": "GIS adds to epidemiological triad:", "options": ["Person", "Time", "Place", "Cost"], "correct": 2, "explain": "Triad is person-time-place."}, {"topic": "GIS", "q": "NOT a typical GIS application:", "options": ["Outbreak mapping", "Air dispersion", "Exposure tracking", "Employment contracts"], "correct": 3, "explain": "Contracts unrelated to GIS."}, {"topic": "GIS", "q": "GIS data sources:", "options": ["Vendors only", "Government, vendors, GPS, RS", "Satellites only", "Hand drawings"], "correct": 1, "explain": "Multiple integrated data streams."}, {"topic": "GIS", "q": "Most costly GIS component often:", "options": ["Software", "Hardware", "Data", "People"], "correct": 2, "explain": "Quality geographic data is expensive."}, {"topic": "GIS", "q": "GIS maps allow:", "options": ["Print only", "Scan, zoom, layer overlay", "View only", "Edit only"], "correct": 1, "explain": "Interactive multi-layer analysis."}, {"topic": "GIS", "q": "Geographic data with coordinates gathered with:", "options": ["Telescopes", "GPS units", "Microscopes", "Calculators"], "correct": 1, "explain": "Global Positioning System."}, {"topic": "OilSpill", "q": "Oils spread on water due to:", "options": ["Magnetism", "Surface tension, gravity, viscosity", "Light", "Sound"], "correct": 1, "explain": "Three physical properties."}, {"topic": "OilSpill", "q": "Chocolate mousse refers to:", "options": ["Skimmer", "Water-in-oil emulsion", "Cleanup product", "Type of oil"], "correct": 1, "explain": "Persistent emulsion from waves."}, {"topic": "OilSpill", "q": "First-response containment:", "options": ["Skimmer", "Sorbent", "Oil boom", "Dispersant"], "correct": 2, "explain": "Booms float on surface."}, {"topic": "OilSpill", "q": "In-situ burning removes:", "options": ["50%", "75%", "98%", "100%"], "correct": 2, "explain": "About 98% removal."}, {"topic": "OilSpill", "q": "Biodegradation enhanced by:", "options": ["Salt", "Nitrogen and phosphorus", "Sand", "Acid"], "correct": 1, "explain": "Nutrients support microbes."}, {"topic": "OilSpill", "q": "Skimmers are:", "options": ["Most expensive", "Cheapest cleanup", "Useless", "Small spills only"], "correct": 1, "explain": "Cheap but inefficient in choppy water."}, {"topic": "OilSpill", "q": "Natural sorbents:", "options": ["Plastic", "Peat moss, straw, hay", "Metal", "Glass"], "correct": 1, "explain": "Natural absorbent materials."}, {"topic": "OilSpill", "q": "Dispersants are:", "options": ["First-line", "Last resort, chemical breakdown", "Always best", "Never used"], "correct": 1, "explain": "Add chemicals - cautious use."}, {"topic": "OilSpill", "q": "Tar balls form by:", "options": ["Mixing", "Oxidation at slick edges", "Freezing", "Boiling"], "correct": 1, "explain": "Partial oxidation creates spheres."}, {"topic": "OilSpill", "q": "Tankers should fill to:", "options": ["100%", "Maximum", "About 90%", "50%"], "correct": 2, "explain": "Reduces leak risk."}, {"topic": "LabMethods", "q": "Soil pH measured with:", "options": ["Litmus paper", "Glass electrode pH meter", "Universal indicator", "Taste"], "correct": 1, "explain": "Glass electrode for accuracy."}, {"topic": "LabMethods", "q": "Total nitrogen by:", "options": ["Walkley-Black", "Kjeldahl", "Bray", "Munsell"], "correct": 1, "explain": "Kjeldahl is standard."}, {"topic": "LabMethods", "q": "Heavy metals analysed by:", "options": ["pH only", "AAS or ICP-MS", "Litmus", "Microscopy"], "correct": 1, "explain": "Atomic Absorption or ICP-MS."}, {"topic": "LabMethods", "q": "BOD measured over:", "options": ["1 day", "3 days", "5 days", "30 days"], "correct": 2, "explain": "BOD5 standard."}, {"topic": "LabMethods", "q": "Autoclave conditions:", "options": ["100°C", "121°C at 15 psi for 15 min", "60°C 30 min", "200°C 1 hr"], "correct": 1, "explain": "Standard sterilisation."}, {"topic": "LabMethods", "q": "MPN method for:", "options": ["Heavy metals", "Microbial counts in water", "Soil pH", "Air pollutants"], "correct": 1, "explain": "Most Probable Number for water."}, {"topic": "LabMethods", "q": "Gram staining is:", "options": ["Optional", "Most fundamental microbiology stain", "Outdated", "Expensive"], "correct": 1, "explain": "Distinguishes Gram+/Gram-."}, {"topic": "LabMethods", "q": "Ziehl-Neelsen for:", "options": ["Salmonella", "Mycobacterium (acid-fast)", "E. coli", "Schistosoma"], "correct": 1, "explain": "Acid-fast TB stain."}, {"topic": "LabMethods", "q": "Antimicrobial susceptibility:", "options": ["Pour plate", "Streak plate", "Disc diffusion (Kirby-Bauer)", "MPN"], "correct": 2, "explain": "Standard sensitivity test."}, {"topic": "LabMethods", "q": "Giemsa stain for:", "options": ["Acid-fast", "Blood films (malaria, trypanosomes)", "Soil", "Pesticides"], "correct": 1, "explain": "Standard blood parasite ID."}, {"topic": "Pesticides", "q": "Herbicide targets:", "options": ["Insects", "Weeds", "Fungi", "Rodents"], "correct": 1, "explain": "Pesticide naming follows target."}, {"topic": "Pesticides", "q": "EC formulation:", "options": ["Powder", "Liquid mixing with water as emulsion", "Granule", "Fumigant"], "correct": 1, "explain": "Emulsifiable Concentrate."}, {"topic": "Pesticides", "q": "Systemic pesticide:", "options": ["Contact only", "Absorbed and distributed internally", "Gas only", "Repellent"], "correct": 1, "explain": "Plant absorbs, pest poisoned inside."}, {"topic": "Pesticides", "q": "WHO Class Ia:", "options": ["Slightly hazardous", "Moderately", "Highly", "Extremely hazardous"], "correct": 3, "explain": "Most dangerous."}, {"topic": "Pesticides", "q": "PHI is:", "options": ["Public Health Index", "Pre-Harvest Interval", "Pesticide Holding Info", "Personal Hygiene Info"], "correct": 1, "explain": "Min days between application and harvest."}, {"topic": "Pests", "q": "IPM combines all EXCEPT:", "options": ["Cultural", "Biological", "Chemical as last resort", "Random spraying"], "correct": 3, "explain": "IPM uses targeted tactics."}, {"topic": "Pests", "q": "Sterile insect technique:", "options": ["Biological", "Chemical", "Genetic", "Cultural"], "correct": 2, "explain": "Genetic control."}, {"topic": "Hypersensitivity", "q": "Patch test detects:", "options": ["Type I", "Type IV delayed contact", "Heavy metals", "Infections"], "correct": 1, "explain": "Delayed contact dermatitis."}, {"topic": "Hypersensitivity", "q": "Type I mediated by:", "options": ["IgG", "IgE and mast cells", "T cells", "Immune complexes"], "correct": 1, "explain": "IgE-mediated immediate."}, {"topic": "Hypersensitivity", "q": "Hypersensitivity pneumonitis:", "options": ["Type I", "Type II", "Type III", "Type IV"], "correct": 2, "explain": "Type III immune complex."}, {"topic": "Hypersensitivity", "q": "Skin prick test detects:", "options": ["Type IV", "Type I IgE", "Bacterial", "Heavy metals"], "correct": 1, "explain": "Immediate IgE in 15 min."}, {"topic": "Radiation", "q": "NOT ionising:", "options": ["Alpha", "Beta", "Gamma", "Visible light"], "correct": 3, "explain": "Visible light is non-ionising."}, {"topic": "Radiation", "q": "ALARA stands for:", "options": ["Approximately Low And Radiation Aware", "As Low As Reasonably Achievable", "Always Limit All Radiation Activities", "Annual Limit"], "correct": 1, "explain": "Core radiation safety principle."}, {"topic": "Radiation", "q": "3 protection principles:", "options": ["Time, Distance, Shielding", "Speed, Power, Light", "Air, Water, Soil", "Push, Pull, Cover"], "correct": 0, "explain": "TDS - radiation safety triangle."}, {"topic": "Radiation", "q": "Absorbed dose unit:", "options": ["Becquerel", "Gray", "Sievert", "Watt"], "correct": 1, "explain": "Gray (Gy) for absorbed dose."}, {"topic": "Radiation", "q": "Sievert measures:", "options": ["Activity", "Absorbed", "Equivalent dose (biological)", "Power"], "correct": 2, "explain": "Sievert weights for biological impact."}, {"topic": "Radiation", "q": "Activity unit:", "options": ["Becquerel", "Gray", "Sievert", "Watt"], "correct": 0, "explain": "Bq = decays/sec."}, {"topic": "GasFlaring", "q": "Gas flaring associated with:", "options": ["Pharma", "Oil and gas", "Textiles", "Mining"], "correct": 1, "explain": "Common in oil production."}, {"topic": "GasFlaring", "q": "NOT a flaring control:", "options": ["Reinjection", "LNG", "Gas-to-power", "Open burning"], "correct": 3, "explain": "Open burning IS flaring."}, {"topic": "GasFlaring", "q": "Nigerian flare commercialisation:", "options": ["NSITF", "NGFCP", "NAFDAC", "FRSC"], "correct": 1, "explain": "Nigerian Gas Flare Commercialisation Programme."}, {"topic": "GasFlaring", "q": "Gas flaring impacts:", "options": ["Beneficial", "CO2, methane, black carbon, NOx, SO2", "Cooling", "Healing"], "correct": 1, "explain": "Multiple atmospheric pollutants."}];
+const FLASHCARDS = [{"term": "EIA", "def": "Environmental Impact Assessment - formal process to predict environmental consequences of activities, before project starts."}, {"term": "3 EIA Functions", "def": "Predict problems, find ways to Avoid them, Enhance positive effects."}, {"term": "5 EIA Steps", "def": "Screening, Scoping, Prediction & Mitigation, Management & Monitoring, Audit."}, {"term": "Screening", "def": "Categorise project, decide if full EIA needed."}, {"term": "Scoping", "def": "Determine critical issues to study. Involves community."}, {"term": "EIS", "def": "Environmental Impact Statement - detailed plan output of EIA process."}, {"term": "Delphi Technique", "def": "Expert consensus method for impact projection in EIA."}, {"term": "4 EIA Decisions", "def": "Proceed; Proceed with conditions; New EIS required; Do not proceed."}, {"term": "Sustainable Development", "def": "Meeting present needs without damaging future health/environment (Brundtland)."}, {"term": "EAD", "def": "Environmental Audit - systematic post-implementation review for compliance."}, {"term": "Compliance Audit", "def": "Confirms adherence to environmental laws and regulations."}, {"term": "Pre-acquisition Audit", "def": "Due diligence audit before buying property/facility."}, {"term": "ES / ESM", "def": "Environmental Statement. Document presenting EIA findings to public and decision-makers."}, {"term": "ES Components", "def": "Non-technical summary, project description, baseline, methodology, impacts, mitigation, alternatives, EMP, residual impacts, references."}, {"term": "HIA", "def": "Health Impact Assessment - estimates effects of an action on health of defined population."}, {"term": "4 HIA Values", "def": "Democracy, Equity, Sustainable development, Ethical use of evidence."}, {"term": "6 HIA Stages", "def": "Screening, Scoping, Appraisal, Recommendations, Implementation, Monitoring & Evaluation."}, {"term": "Remote Sensing", "def": "Acquisition of information about an object without physical contact."}, {"term": "5 RS Components", "def": "Energy source, Sensor, Platform, Target, Interpreter."}, {"term": "Passive RS", "def": "Uses natural energy (sunlight, thermal). Cannot operate without natural source."}, {"term": "Active RS", "def": "Sensor emits own energy (radar, LiDAR). Day/night, any season."}, {"term": "LANDSAT", "def": "USA Earth resources satellite. Weather, agriculture, mapping."}, {"term": "INSAT", "def": "Indian National Satellite series."}, {"term": "Microwave Sensing", "def": "Works through haze, rain, clouds. Radar (active), microwave radiometer (passive)."}, {"term": "LiDAR", "def": "Light Detection and Ranging - active RS using laser pulses."}, {"term": "GIS", "def": "Geographic Information System - integrated software/data for spatial analysis."}, {"term": "5 GIS Components", "def": "People, Hardware, Software, Data, Applications."}, {"term": "Epidemiological Triad", "def": "Person, Time, Place. GIS adds powerful 'place' analysis."}, {"term": "Oil Spill", "def": "Release of petroleum into environment from ships, pipelines, storage."}, {"term": "3 Oil Properties", "def": "Surface tension, Specific gravity, Viscosity - determine spread."}, {"term": "5 Oil Fate Processes", "def": "Weathering, Evaporation, Oxidation, Biodegradation, Emulsification."}, {"term": "5 Oil Cleanup Methods", "def": "Booms, Skimmers, Sorbents, In-situ burning, Dispersants."}, {"term": "Oil Boom", "def": "Floating barrier - first-response containment."}, {"term": "Skimmer", "def": "Recovers oil from water surface. Cheapest method."}, {"term": "In-situ Burning", "def": "Igniting spilled oil. Removes about 98%."}, {"term": "Chocolate Mousse", "def": "Water-in-oil emulsion from waves. Persists months."}, {"term": "Tar Balls", "def": "Dense black spheres from partial oxidation."}, {"term": "Soil Analysis", "def": "Physical (texture, density), chemical (pH, Walkley-Black, Kjeldahl, AAS), biological."}, {"term": "Water Analysis", "def": "Physical, chemical (DO, BOD, COD), biological (MPN)."}, {"term": "BOD", "def": "Biochemical Oxygen Demand. 5-day microbial oxygen consumption."}, {"term": "AAS", "def": "Atomic Absorption Spectrophotometry. Heavy metals analysis."}, {"term": "MPN", "def": "Most Probable Number. Bacterial count in water."}, {"term": "Gram Staining", "def": "Most fundamental microbiology stain."}, {"term": "Ziehl-Neelsen", "def": "Acid-fast stain for Mycobacterium (TB)."}, {"term": "Giemsa", "def": "Stain for blood parasites - malaria, trypanosomes."}, {"term": "IPM", "def": "Integrated Pest Management - cultural, mechanical, biological, chemical, genetic."}, {"term": "WHO Pesticide Classes", "def": "Ia (extreme), Ib (high), II (moderate), III (slight), U (unlikely)."}, {"term": "PHI", "def": "Pre-Harvest Interval. Min days from application to harvest."}, {"term": "ALARA", "def": "As Low As Reasonably Achievable. Radiation protection."}, {"term": "3 Radiation Protections", "def": "Time, Distance, Shielding."}];
+const ESSAYS = [{"title": "Discuss field and laboratory techniques used in EIA studies", "points": ["Definition of EIA, three functions", "Five process steps", "Field techniques", "Laboratory techniques", "Data sequence", "EIS reviewed by panel"]}, {"title": "Explain the concept and components of Environmental Audit", "points": ["Definition", "Objectives", "Types", "Field techniques", "Laboratory techniques", "Benefits"]}, {"title": "Describe the components of an Environmental Statement", "points": ["Definition", "Purpose", "10 components", "Comparison with EIA and EAD"]}, {"title": "Discuss the stages of Health Impact Assessment", "points": ["Definition", "Aims", "DESE four core values", "Six stages", "Methods", "Applications"]}, {"title": "Discuss remote sensing: principles, types, applications", "points": ["Definition", "In-situ vs RS", "Five components", "Passive vs active", "Methods", "Applications"]}, {"title": "Discuss the use of GIS in environmental health", "points": ["Definition", "Decision support system", "Five components", "Adds 'place' to triad", "Essential services", "Applications"]}, {"title": "Simulate cleaning an oil spill in water", "points": ["Causes", "Physical properties", "Five fate processes", "Five cleanup methods", "Effects", "Prevention"]}, {"title": "Discuss methods of pest management and pesticide use", "points": ["Pest types", "IPM concept", "Five tactics", "Steps", "Formulations", "Mode of action", "WHO classes", "Safe use"]}, {"title": "Explain methods of gas flaring control", "points": ["Definition", "Reasons", "Impacts", "Control methods", "Nigeria context: Gas Flaring Act, NGFCP, PIA 2021"]}, {"title": "Describe analysis methods of environmental samples", "points": ["Soil", "Water", "Air", "Food: proximate, microbial, residues, heavy metals, aflatoxins"]}, {"title": "Discuss field and laboratory techniques in Environmental Audit", "points": ["EAD definition", "Types", "Field methods", "Lab methods", "Benefits and reporting"]}, {"title": "Explain the EIA process from screening to audit", "points": ["Step 1 Screening", "Step 2 Scoping", "Step 3 Prediction & Mitigation", "Step 4 Management & Monitoring", "Step 5 Audit", "Public participation", "Decision outcomes"]}, {"title": "Discuss public participation in EIA", "points": ["Why it matters", "When", "Methods", "Benefits", "Challenges", "Best practice"]}, {"title": "Discuss types of remote sensing methods", "points": ["Photogrammetry/aerial", "Thermal/multispectral", "Microwave", "Earth Resources Satellites"]}, {"title": "Compare EIA, EAD, and ESM", "points": ["EIA: predictive", "EAD: retrospective", "ESM: communication output", "Timing", "Purpose", "Focus", "Outputs"]}, {"title": "Describe environmental sampling for water quality", "points": ["Sample types", "Physical", "Chemical", "Biological", "Heavy metals", "Sampling protocols"]}, {"title": "Discuss soil analysis methods in environmental assessment", "points": ["Physical", "Chemical", "Biological", "Application in EIA"]}, {"title": "Discuss air quality monitoring techniques", "points": ["Pollutants", "Sampling devices", "Methods", "Standards", "Health implications"]}, {"title": "Discuss food analysis methods", "points": ["Proximate", "Microbial", "Residues", "Metals", "Aflatoxins", "Adulterants"]}, {"title": "Discuss parasitology techniques in environmental health", "points": ["Stool methods", "Blood methods", "Other", "Applications"]}, {"title": "Discuss radiation effects and exposure assessment", "points": ["Two types", "Acute effects", "Chronic effects", "Measurement instruments", "ALARA", "Units: Bq, Gy, Sv"]}, {"title": "Explain hypersensitivity assessment to environmental chemicals", "points": ["Definition", "Types I-IV", "Skin tests", "Blood tests", "Provocation", "Exposure assessment", "Prevention"]}, {"title": "Discuss Integrated Pest Management", "points": ["Definition", "Five tactics", "Steps", "Vector control specifics"]}, {"title": "Discuss pesticide formulations and safe use", "points": ["Pesticide types", "Formulations", "Mode of action", "WHO classes", "Safe use rules"]}, {"title": "Discuss laboratory and field work in EIA", "points": ["Field role: sampling", "Lab role: analysis", "Industrial areas", "Air analysis", "Water analysis", "Pollution load", "Baseline data"]}];
+const QUICK_REFERENCE = [{"category": "Mnemonics", "items": [{"label": "PAE", "desc": "Predict, Avoid, Enhance (EIA)"}, {"label": "DESE", "desc": "Democracy, Equity, Sustainable, Ethical (HIA)"}, {"label": "WEOBE", "desc": "Weathering, Evaporation, Oxidation, Biodegradation, Emulsification"}, {"label": "BSSID", "desc": "Booms, Skimmers, Sorbents, In-situ, Dispersants"}, {"label": "ALARA", "desc": "As Low As Reasonably Achievable"}, {"label": "TDS", "desc": "Time, Distance, Shielding (radiation)"}]}, {"category": "Critical Numbers", "items": [{"label": "5", "desc": "EIA process steps"}, {"label": "6", "desc": "HIA stages"}, {"label": "5", "desc": "RS components"}, {"label": "5", "desc": "GIS components"}, {"label": "5", "desc": "Oil cleanup methods"}, {"label": "4", "desc": "EIA decision outcomes"}, {"label": "3", "desc": "Oil properties"}, {"label": "3", "desc": "EIA functions"}, {"label": "5 days", "desc": "BOD measurement"}, {"label": "121°C", "desc": "Autoclave temp"}, {"label": "15 psi", "desc": "Autoclave pressure"}, {"label": "15 min", "desc": "Autoclave time"}, {"label": "98%", "desc": "Oil removed by burning"}, {"label": "90%", "desc": "Max tanker fill"}]}, {"category": "Hypersensitivity", "items": [{"label": "Type I", "desc": "IgE immediate (anaphylaxis)"}, {"label": "Type II", "desc": "IgG/IgM cytotoxic"}, {"label": "Type III", "desc": "Immune complex"}, {"label": "Type IV", "desc": "Cell-mediated delayed"}]}, {"category": "WHO Pesticide", "items": [{"label": "Ia", "desc": "Extremely hazardous"}, {"label": "Ib", "desc": "Highly hazardous"}, {"label": "II", "desc": "Moderately hazardous"}, {"label": "III", "desc": "Slightly hazardous"}, {"label": "U", "desc": "Unlikely hazard"}]}, {"category": "Radiation Units", "items": [{"label": "Bq", "desc": "Becquerel - activity"}, {"label": "Gy", "desc": "Gray - absorbed dose"}, {"label": "Sv", "desc": "Sievert - biological"}]}];
+
+function App() {
+  const [mode, setMode] = useState('home');
+  const [topicFilter, setTopicFilter] = useState('All');
+  const [questionIndex, setQuestionIndex] = useState(0);
+  const [selected, setSelected] = useState(null);
+  const [revealed, setRevealed] = useState(false);
+  const [score, setScore] = useState({ correct: 0, total: 0 });
+  const [shuffled, setShuffled] = useState(false);
+  const [questionOrder, setQuestionOrder] = useState([]);
+  const [flashIndex, setFlashIndex] = useState(0);
+  const [flashFlipped, setFlashFlipped] = useState(false);
+  const [flashOrder, setFlashOrder] = useState([]);
+  const [essayIndex, setEssayIndex] = useState(0);
+  const [revealedEssay, setRevealedEssay] = useState(false);
+
+  const topics = ['All', ...new Set(MCQ_BANK.map(q => q.topic))];
+
+  const filteredQuestions = useMemo(() => {
+    if (topicFilter === 'All') return MCQ_BANK;
+    return MCQ_BANK.filter(q => q.topic === topicFilter);
+  }, [topicFilter]);
+
+  useEffect(() => {
+    const order = filteredQuestions.map((_, i) => i);
+    if (shuffled) {
+      for (let i = order.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [order[i], order[j]] = [order[j], order[i]];
+      }
+    }
+    setQuestionOrder(order);
+    setQuestionIndex(0);
+    setSelected(null);
+    setRevealed(false);
+    setScore({ correct: 0, total: 0 });
+  }, [topicFilter, shuffled, filteredQuestions]);
+
+  useEffect(() => { setFlashOrder(FLASHCARDS.map((_, i) => i)); }, []);
+
+  const currentQ = filteredQuestions[questionOrder[questionIndex]];
+
+  const handleAnswer = (idx) => {
+    if (revealed) return;
+    setSelected(idx);
+    setRevealed(true);
+    setScore(s => ({ correct: s.correct + (idx === currentQ.correct ? 1 : 0), total: s.total + 1 }));
+  };
+
+  const nextQuestion = () => {
+    if (questionIndex < questionOrder.length - 1) {
+      setQuestionIndex(i => i + 1);
+      setSelected(null);
+      setRevealed(false);
+    }
+  };
+
+  const prevQuestion = () => {
+    if (questionIndex > 0) {
+      setQuestionIndex(i => i - 1);
+      setSelected(null);
+      setRevealed(false);
+    }
+  };
+
+  const restart = () => {
+    setQuestionIndex(0);
+    setSelected(null);
+    setRevealed(false);
+    setScore({ correct: 0, total: 0 });
+  };
+
+  const shuffleFlash = () => {
+    const order = [...flashOrder];
+    for (let i = order.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+    setFlashOrder(order);
+    setFlashIndex(0);
+    setFlashFlipped(false);
+  };
+
+  const currentFlash = FLASHCARDS[flashOrder[flashIndex]];
+  const currentEssay = ESSAYS[essayIndex];
+
+  return (
+    <div className="min-h-screen text-stone-100" style={{ background: 'radial-gradient(ellipse at top, #2a1f17 0%, #1a1410 50%, #0f0c0a 100%)', fontFamily: '"Plus Jakarta Sans", -apple-system, sans-serif' }}>
+      <div className="grain-overlay">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10 relative" style={{ zIndex: 2 }}>
+
+          <header className="mb-8 sm:mb-12 fade-in">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="h-px w-8 bg-amber-600/60"></div>
+              <span className="text-xs uppercase tracking-[0.3em] text-amber-500/80">EHS 507 · Day 3</span>
+            </div>
+            <h1 className="display-font text-4xl sm:text-6xl font-medium leading-[0.95] mb-3" style={{ color: '#f5e8d0' }}>
+              Environmental Health<br/>
+              <span className="italic" style={{ color: '#d4a574' }}>Lab Practice I</span>
+            </h1>
+            <p className="text-stone-400 text-sm sm:text-base max-w-xl">EIA, EAD, ES dominate. Master the 5 EIA steps and 5 RS components. Oil spills are exam gold.</p>
+          </header>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-6 sm:mb-8">
+            {[
+              { id: 'home', label: 'Quiz', icon: Target, desc: MCQ_BANK.length + ' MCQs' },
+              { id: 'flash', label: 'Flashcards', icon: Layers, desc: FLASHCARDS.length + ' cards' },
+              { id: 'essay', label: 'Essays', icon: FileText, desc: ESSAYS.length + ' outlines' },
+              { id: 'quick', label: 'Quick Ref', icon: BookOpen, desc: 'Drill cards' }
+            ].map(m => {
+              const I = m.icon;
+              const active = mode === m.id;
+              return (
+                <button key={m.id} onClick={() => setMode(m.id)} className={`group relative p-3 sm:p-4 rounded-lg border transition-all text-left ${active ? 'border-amber-500/60 bg-amber-950/30' : 'border-stone-800 hover:border-stone-700 bg-stone-950/40'}`}>
+                  <I size={18} className={active ? 'text-amber-400' : 'text-stone-400'} />
+                  <div className={`mt-2 text-sm font-medium ${active ? 'text-amber-100' : 'text-stone-200'}`}>{m.label}</div>
+                  <div className="text-[10px] sm:text-xs text-stone-500 mt-0.5">{m.desc}</div>
+                </button>
+              );
+            })}
+          </div>
+
+          {mode === 'home' && currentQ && (
+            <div className="fade-in">
+              <div className="bg-stone-950/60 border border-stone-800 rounded-lg p-4 mb-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="text-xs text-stone-500 uppercase tracking-wider">Question</div>
+                    <div className="display-font text-2xl text-amber-400">{questionIndex + 1}<span className="text-stone-600">/{questionOrder.length}</span></div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <div className="text-xs text-stone-500 uppercase tracking-wider">Score</div>
+                      <div className="display-font text-2xl">
+                        <span style={{ color: score.total > 0 && score.correct/score.total >= 0.7 ? '#86efac' : '#d4a574' }}>{score.correct}</span>
+                        <span className="text-stone-600">/{score.total}</span>
+                      </div>
+                    </div>
+                    <button onClick={restart} className="p-2 hover:bg-stone-800 rounded transition-colors" title="Restart"><RotateCcw size={16} className="text-stone-400" /></button>
+                    <button onClick={() => setShuffled(s => !s)} className={`p-2 rounded transition-colors ${shuffled ? 'bg-amber-950 text-amber-400' : 'hover:bg-stone-800 text-stone-400'}`} title="Shuffle"><Shuffle size={16} /></button>
+                  </div>
+                </div>
+                <div className="h-1 bg-stone-900 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-amber-700 to-amber-500 transition-all duration-500" style={{ width: `${((questionIndex + 1) / questionOrder.length) * 100}%` }}></div>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-1.5">
+                  {topics.map(t => (
+                    <button key={t} onClick={() => setTopicFilter(t)} className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${topicFilter === t ? 'border-amber-600 bg-amber-950/50 text-amber-200' : 'border-stone-800 text-stone-400 hover:border-stone-700'}`}>{t}</button>
+                  ))}
+                </div>
+              </div>
+
+              <div key={questionIndex} className="bg-stone-950/60 border border-stone-800 rounded-lg p-5 sm:p-7 scale-in">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.2em] text-amber-500/80 px-2 py-1 rounded-full bg-amber-950/30 border border-amber-900/40">
+                    <Activity size={14} />
+                    {currentQ.topic}
+                  </span>
+                </div>
+                <h2 className="display-font text-xl sm:text-2xl text-stone-100 leading-snug mb-6">{currentQ.q}</h2>
+                <div className="space-y-2">
+                  {currentQ.options.map((opt, i) => {
+                    const isCorrect = i === currentQ.correct;
+                    const isSelected = selected === i;
+                    let cls = 'border-stone-800 hover:border-stone-700 bg-stone-900/30';
+                    if (revealed) {
+                      if (isCorrect) cls = 'border-emerald-700 bg-emerald-950/40 text-emerald-100';
+                      else if (isSelected && !isCorrect) cls = 'border-rose-800 bg-rose-950/40 text-rose-200';
+                      else cls = 'border-stone-800 bg-stone-950/30 opacity-50';
+                    }
+                    return (
+                      <button key={i} onClick={() => handleAnswer(i)} disabled={revealed} className={`w-full text-left p-3 sm:p-4 rounded-lg border transition-all flex items-start gap-3 ${cls}`}>
+                        <div className={`flex-shrink-0 w-7 h-7 rounded-full border flex items-center justify-center text-xs font-medium ${revealed && isCorrect ? 'border-emerald-600 bg-emerald-900 text-emerald-200' : revealed && isSelected && !isCorrect ? 'border-rose-700 bg-rose-900 text-rose-200' : 'border-stone-700 text-stone-400'}`}>
+                          {revealed && isCorrect ? <Check size={14} /> : revealed && isSelected && !isCorrect ? <X size={14} /> : ['A','B','C','D'][i]}
+                        </div>
+                        <span className="text-sm sm:text-base pt-0.5">{opt}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {revealed && (
+                  <div className="mt-5 p-4 bg-amber-950/20 border-l-2 border-amber-600/60 rounded-r-lg slide-right">
+                    <div className="text-xs uppercase tracking-wider text-amber-500/80 mb-1">Why</div>
+                    <p className="text-sm text-stone-300 leading-relaxed">{currentQ.explain}</p>
+                  </div>
+                )}
+                <div className="flex justify-between items-center mt-6">
+                  <button onClick={prevQuestion} disabled={questionIndex === 0} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                    <ChevronLeft size={16} /> Previous
+                  </button>
+                  {questionIndex === questionOrder.length - 1 && revealed ? (
+                    <div className="flex items-center gap-2 text-amber-400 text-sm">
+                      <Trophy size={16} />
+                      Final score: {score.correct}/{score.total}
+                    </div>
+                  ) : (
+                    <button onClick={nextQuestion} disabled={!revealed || questionIndex === questionOrder.length - 1} className="flex items-center gap-1.5 px-4 py-2 bg-amber-700 hover:bg-amber-600 disabled:opacity-30 disabled:cursor-not-allowed text-stone-50 rounded-md text-sm font-medium transition-colors">
+                      Next <ChevronRight size={16} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {mode === 'flash' && (
+            <div className="fade-in">
+              <div className="bg-stone-950/60 border border-stone-800 rounded-lg p-4 mb-4 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="text-xs text-stone-500 uppercase tracking-wider">Card</div>
+                  <div className="display-font text-2xl text-amber-400">{flashIndex + 1}<span className="text-stone-600">/{FLASHCARDS.length}</span></div>
+                </div>
+                <button onClick={shuffleFlash} className="flex items-center gap-1.5 px-3 py-2 text-stone-300 hover:text-amber-400 border border-stone-800 hover:border-amber-700 rounded-md text-sm transition-colors">
+                  <Shuffle size={14} /> Shuffle
+                </button>
+              </div>
+              <div key={flashIndex} onClick={() => setFlashFlipped(f => !f)} className="bg-gradient-to-br from-stone-900 to-stone-950 border border-stone-800 rounded-lg p-7 sm:p-12 min-h-[280px] sm:min-h-[340px] flex items-center justify-center cursor-pointer hover:border-amber-700/60 transition-colors scale-in">
+                <div className="text-center max-w-2xl">
+                  {!flashFlipped ? (
+                    <>
+                      <div className="text-xs uppercase tracking-[0.3em] text-amber-500/70 mb-4">Term</div>
+                      <h2 className="display-font text-3xl sm:text-4xl font-medium text-stone-100 mb-4">{currentFlash.term}</h2>
+                      <p className="text-xs text-stone-500 mt-6 italic">tap to reveal</p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-xs uppercase tracking-[0.3em] text-amber-500/70 mb-4">Definition</div>
+                      <p className="text-base sm:text-lg text-stone-200 leading-relaxed">{currentFlash.def}</p>
+                      <p className="text-xs text-stone-500 mt-6 italic">tap to flip back</p>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-between items-center mt-4">
+                <button onClick={() => { setFlashIndex(i => Math.max(0, i-1)); setFlashFlipped(false); }} disabled={flashIndex === 0} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  <ChevronLeft size={16} /> Previous
+                </button>
+                <div className="flex-1 mx-4 h-1 bg-stone-900 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-amber-700 to-amber-500" style={{ width: `${((flashIndex + 1) / FLASHCARDS.length) * 100}%` }}></div>
+                </div>
+                <button onClick={() => { setFlashIndex(i => Math.min(FLASHCARDS.length-1, i+1)); setFlashFlipped(false); }} disabled={flashIndex === FLASHCARDS.length-1} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  Next <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {mode === 'essay' && currentEssay && (
+            <div className="fade-in">
+              <div className="bg-stone-950/60 border border-stone-800 rounded-lg p-4 mb-4 flex items-center justify-between">
+                <div>
+                  <div className="text-xs text-stone-500 uppercase tracking-wider">Essay</div>
+                  <div className="display-font text-2xl text-amber-400">{essayIndex + 1}<span className="text-stone-600">/{ESSAYS.length}</span></div>
+                </div>
+                <button onClick={() => setRevealedEssay(r => !r)} className="text-xs px-3 py-1.5 border border-stone-800 hover:border-amber-700 rounded-md text-stone-300 hover:text-amber-400 transition-colors">
+                  {revealedEssay ? 'Hide outline' : 'Reveal outline'}
+                </button>
+              </div>
+              <div key={essayIndex} className="bg-stone-950/60 border border-stone-800 rounded-lg p-6 sm:p-8 scale-in">
+                <h2 className="display-font text-xl sm:text-2xl text-stone-100 leading-snug mb-6 italic">{currentEssay.title}</h2>
+                {revealedEssay ? (
+                  <div className="space-y-3 slide-right">
+                    <div className="text-xs uppercase tracking-wider text-amber-500/80 mb-2">Skeleton outline</div>
+                    {currentEssay.points.map((pt, i) => (
+                      <div key={i} className="flex gap-3 items-start">
+                        <div className="flex-shrink-0 w-6 h-6 rounded-full border border-amber-700/50 text-amber-400 text-xs flex items-center justify-center mt-0.5">{i+1}</div>
+                        <p className="text-sm text-stone-300 leading-relaxed pt-0.5">{pt}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6">
+                    <p className="text-stone-500 italic mb-1">Try drafting your own outline first.</p>
+                    <p className="text-stone-600 text-sm">Then reveal to compare.</p>
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-between items-center mt-4">
+                <button onClick={() => { setEssayIndex(i => Math.max(0, i-1)); setRevealedEssay(false); }} disabled={essayIndex === 0} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  <ChevronLeft size={16} /> Previous
+                </button>
+                <button onClick={() => { setEssayIndex(i => Math.min(ESSAYS.length-1, i+1)); setRevealedEssay(false); }} disabled={essayIndex === ESSAYS.length-1} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  Next <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {mode === 'quick' && (
+            <div className="fade-in space-y-6">
+              {QUICK_REFERENCE.map(section => (
+                <div key={section.category} className="bg-stone-950/60 border border-stone-800 rounded-lg p-5 sm:p-7">
+                  <div className="flex items-center gap-2 mb-5">
+                    <div className="h-px flex-1 bg-stone-800"></div>
+                    <h3 className="display-font text-lg italic text-amber-400 px-3">{section.category}</h3>
+                    <div className="h-px flex-1 bg-stone-800"></div>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-2 sm:gap-3">
+                    {section.items.map((item, i) => (
+                      <div key={i} className="flex items-start gap-3 p-3 rounded-md border border-stone-800/50 bg-stone-900/30 hover:border-amber-800/50 hover:bg-amber-950/10 transition-colors">
+                        <div className="display-font font-medium text-amber-300 text-base sm:text-lg flex-shrink-0 min-w-[60px]">{item.label}</div>
+                        <p className="text-xs sm:text-sm text-stone-300 pt-1">{item.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <footer className="mt-12 pt-6 border-t border-stone-900 text-center">
+            <p className="text-xs text-stone-600 italic display-font">EHS 507 · Day 3 · Made by Chidinma Nwatu (The Revolutionary Educator)</p>
+          </footer>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+document.getElementById('loading').classList.add('hidden');
+</script>
+</body>
+</html>

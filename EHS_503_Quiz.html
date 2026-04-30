@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a1410">
+<title>EHS 503 — Water/Air Quality Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js" crossorigin></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  html, body { background: #0f0c0a; }
+  body { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes scaleIn { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
+  @keyframes slideRight { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: translateX(0); } }
+  .fade-in { animation: fadeIn 0.4s ease-out; }
+  .scale-in { animation: scaleIn 0.3s ease-out; }
+  .slide-right { animation: slideRight 0.4s ease-out; }
+  .display-font { font-family: 'Fraunces', Georgia, serif; font-optical-sizing: auto; }
+  .grain-overlay::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 1;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3CfeColorMatrix values='0 0 0 0 0.6 0 0 0 0 0.4 0 0 0 0 0.2 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.4;
+  }
+  #loading { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; color: #d4a574; font-family: 'Fraunces', serif; font-style: italic; font-size: 18px; }
+  #loading.hidden { display: none; }
+</style>
+</head>
+<body>
+<div id="loading">loading your study pack...</div>
+<div id="root"></div>
+
+<script type="text/babel" data-type="module" data-presets="react">
+const { useState, useEffect, useMemo } = React;
+
+const Icon = ({ children, size = 18, className = '' }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
+);
+const Activity = (p) => <Icon {...p}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></Icon>;
+const RotateCcw = (p) => <Icon {...p}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></Icon>;
+const ChevronLeft = (p) => <Icon {...p}><path d="m15 18-6-6 6-6"/></Icon>;
+const ChevronRight = (p) => <Icon {...p}><path d="m9 18 6-6-6-6"/></Icon>;
+const Check = (p) => <Icon {...p}><path d="M20 6 9 17l-5-5"/></Icon>;
+const X = (p) => <Icon {...p}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></Icon>;
+const Shuffle = (p) => <Icon {...p}><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22"/><path d="m18 2 4 4-4 4"/><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2"/><path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8"/><path d="m18 14 4 4-4 4"/></Icon>;
+const BookOpen = (p) => <Icon {...p}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></Icon>;
+const Layers = (p) => <Icon {...p}><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></Icon>;
+const FileText = (p) => <Icon {...p}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></Icon>;
+const Target = (p) => <Icon {...p}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></Icon>;
+const Trophy = (p) => <Icon {...p}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></Icon>;
+
+const MCQ_BANK = [{"topic": "WaterFoundations", "q": "Water quality is defined as:", "options": ["Just clarity", "Just taste", "Biological, physical, chemical and radiological properties of water compared to a given standard", "Color"], "correct": 2, "explain": "Multiple property dimensions assessed against standards."}, {"topic": "WaterFoundations", "q": "Water quality criteria (CQC) provide:", "options": ["Marketing", "Sales data", "Basic scientific information about effects of pollutants on specific water uses", "Random"], "correct": 2, "explain": "Scientific basis for standards."}, {"topic": "WaterFoundations", "q": "Water quality standard is achieved through:", "options": ["Random", "Water analysis", "Magic", "Music"], "correct": 1, "explain": "Tests and analysis establish quality."}, {"topic": "WaterFoundations", "q": "Water analysis includes tests for:", "options": ["Physical, Chemical, Microbial, and Radiological impurities", "Just bacteria", "Just chemicals", "Random"], "correct": 0, "explain": "Four main categories."}, {"topic": "WaterFoundations", "q": "Physical water quality parameters include:", "options": ["Heavy metals", "Turbidity, color, taste, odour", "Coliform", "Random"], "correct": 1, "explain": "Physical sensory and visible properties."}, {"topic": "WaterFoundations", "q": "Chemical water quality parameters:", "options": ["Just colour", "Total solids, hardness, pH, chlorides, residual chlorine, iron, manganese, organic matter", "Just bacteria", "Random"], "correct": 1, "explain": "Chemical composition tests."}, {"topic": "WaterFoundations", "q": "Microbial water tests target:", "options": ["Coliforms (E. coli), fungi (Candida albicans), arboviruses, parasites (malaria)", "Random", "Heavy metals", "Music"], "correct": 0, "explain": "Disease-causing organisms."}, {"topic": "WaterFoundations", "q": "Coliform group derives its name from:", "options": ["Random", "The colon or large intestines of man", "Latin", "Music"], "correct": 1, "explain": "Indicator of faecal contamination."}, {"topic": "WaterFoundations", "q": "Excess nitrate in water causes:", "options": ["Random", "Diarrhoea", "Methemoglobinemia (blue baby syndrome)", "Music"], "correct": 2, "explain": "Particularly dangerous for infants."}, {"topic": "WaterFoundations", "q": "Bacteriological analysis includes:", "options": ["Just one test", "Total count of bacteria (standard plate count) and E. coli test", "Heavy metal test", "Music"], "correct": 1, "explain": "Two main bacteriological assays."}, {"topic": "WaterFoundations", "q": "Standards for drinking water in Nigeria are based on:", "options": ["WHO international standards with modifications", "Random", "Music", "Sports"], "correct": 0, "explain": "WHO guidelines adapted to local context."}, {"topic": "WaterFoundations", "q": "Heavy metals are defined as metals with density:", "options": ["Less than water", "Random", "Same as water", "More than 5 times that of water"], "correct": 3, "explain": "Density-based classification."}, {"topic": "WaterFoundations", "q": "Heavy metals of concern include:", "options": ["Just lead", "Arsenic, lead, copper, zinc, cadmium, chromium, mercury, selenium", "Random", "Music"], "correct": 1, "explain": "Multiple toxic metals from industrial sources."}, {"topic": "WaterFoundations", "q": "Heavy metal sources include:", "options": ["Random", "Music", "Sewage and industrial wastes", "Sports"], "correct": 2, "explain": "Anthropogenic contamination dominant."}, {"topic": "WaterFoundations", "q": "Most heavy metals are toxic at:", "options": ["Even very low concentrations", "High concentrations only", "Random", "Never"], "correct": 0, "explain": "Bioaccumulate, low threshold of harm."}, {"topic": "HeavyMetals", "q": "Arsenic accumulates in body tissues to cause:", "options": ["Random", "Cancer only", "Arsenosis", "Music"], "correct": 2, "explain": "Affects liver, heart, carcinogenic."}, {"topic": "HeavyMetals", "q": "Arsenic permissible limit in potable water:", "options": ["0.050 mg/L", "1 mg/L", "100 mg/L", "Random"], "correct": 0, "explain": "Very low limit due to toxicity."}, {"topic": "HeavyMetals", "q": "Arsenic sources include:", "options": ["Random", "Music", "Just food", "Ceramics, chemical industries, tanneries, pesticides"], "correct": 3, "explain": "Multiple industrial sources."}, {"topic": "HeavyMetals", "q": "Lead enters water from:", "options": ["Random", "Music", "Just food", "Printing, dyeing industries, oil refineries"], "correct": 3, "explain": "Industrial discharges."}, {"topic": "HeavyMetals", "q": "Lead permissible limit:", "options": ["0.1 mg/L", "10 mg/L", "1 mg/L", "Random"], "correct": 0, "explain": "Even lower limits in newer guidelines."}, {"topic": "HeavyMetals", "q": "Sustained lead exposure (3+ months) can be:", "options": ["Fatal due to lead poisoning", "Harmless", "Always healing", "Random"], "correct": 0, "explain": "Bioaccumulation reaches toxic levels."}, {"topic": "HeavyMetals", "q": "Copper is used in water as:", "options": ["Random", "Music", "Just colour", "Pesticide (with sulphate) and algicide"], "correct": 3, "explain": "Antimicrobial uses, but residue persists."}, {"topic": "HeavyMetals", "q": "Copper limit:", "options": ["1.5 mg/L", "10 mg/L", "100 mg/L", "Random"], "correct": 0, "explain": "Doesn't have toxic effects but produces taste."}, {"topic": "HeavyMetals", "q": "Cadmium sources include:", "options": ["Random", "Electroplating, mining, zinc galvanizing", "Just food", "Music"], "correct": 1, "explain": "Industrial sources dominate."}, {"topic": "HeavyMetals", "q": "Cadmium accumulates in:", "options": ["Random", "Random", "Kidneys, pancreas - causes painful bone diseases", "Music"], "correct": 2, "explain": "Itai-Itai disease."}, {"topic": "HeavyMetals", "q": "Cadmium limit:", "options": ["1 mg/L", "0.01 mg/L", "10 mg/L", "Random"], "correct": 1, "explain": "Very low - extremely toxic."}, {"topic": "HeavyMetals", "q": "Chromium - the toxic form is:", "options": ["Trivalent (Cr3+)", "Tetravalent", "Hexavalent (Cr6+)", "Random"], "correct": 2, "explain": "Cr6+ causes cancer; Cr3+ less toxic."}, {"topic": "HeavyMetals", "q": "Chromium permissible limit:", "options": ["1 mg/L", "0.05 mg/L", "10 mg/L", "Random"], "correct": 1, "explain": "Cancer risk drives low limit."}, {"topic": "HeavyMetals", "q": "Mercury is:", "options": ["Random", "Highly poisonous, mainly from industrial wastes", "Safe", "Music"], "correct": 1, "explain": "Wide industrial use leaves residues."}, {"topic": "HeavyMetals", "q": "Hexavalent chromium when inhaled causes:", "options": ["Random", "Sports", "Music", "Cancers in respiratory tract"], "correct": 3, "explain": "Lung cancer specifically."}, {"topic": "DrinkingWater", "q": "Diseases of gastrointestinal origin from contaminated water include:", "options": ["Random", "Just colds", "Typhoid fever, dysentery", "Music"], "correct": 2, "explain": "Foodborne and waterborne infections."}, {"topic": "DrinkingWater", "q": "WHO standards for drinking water include:", "options": ["Physical, chemical, bacteriological parameters", "Just one test", "Just colour", "Random"], "correct": 0, "explain": "Comprehensive testing required."}, {"topic": "DrinkingWater", "q": "Water quality monitoring requires:", "options": ["Random", "One-time check", "Regular analysis with quality control", "Music"], "correct": 2, "explain": "Ongoing process."}, {"topic": "DrinkingWater", "q": "Surveillance of water supply involves:", "options": ["Continuous oversight, sampling, and audit", "Random", "One sample", "Music"], "correct": 0, "explain": "Public health oversight."}, {"topic": "DrinkingWater", "q": "Water sources requiring protection:", "options": ["Surface water, groundwater, springs, wells", "None", "Just rivers", "Music"], "correct": 0, "explain": "All sources need watershed protection."}, {"topic": "DrinkingWater", "q": "Effluent discharge:", "options": ["Always permitted", "Music", "Random", "Must meet treatment standards before release"], "correct": 3, "explain": "Regulated to protect receiving waters."}, {"topic": "DrinkingWater", "q": "Partially treated water discharge causes:", "options": ["No problems", "Music", "Random", "Pollution of receiving water bodies"], "correct": 3, "explain": "Environmental harm."}, {"topic": "DrinkingWater", "q": "Watershed protection includes:", "options": ["Land use control, riparian zones, sewage management, agricultural BMPs", "Random", "Just one approach", "Music"], "correct": 0, "explain": "Multi-component protection."}, {"topic": "DrinkingWater", "q": "International conventions on water include:", "options": ["Random", "Music", "Just sports", "UN Watercourse Convention, Ramsar"], "correct": 3, "explain": "Global cooperation frameworks."}, {"topic": "DrinkingWater", "q": "Water Sanitation and Hygiene (WASH) targets:", "options": ["Random", "Music", "SDG 6 - clean water and sanitation", "Sports"], "correct": 2, "explain": "Sustainable Development Goal 6."}, {"topic": "AirFoundations", "q": "Air quality management refers to:", "options": ["Random", "Just measuring", "All activities a regulatory authority undertakes to protect human health and environment from air pollution", "Music"], "correct": 2, "explain": "Comprehensive regulatory protection."}, {"topic": "AirFoundations", "q": "Composition of air:", "options": ["Random", "Random", "100% oxygen", "78.09% nitrogen, 20.95% oxygen, 0.93% argon, 0.04% CO2, others"], "correct": 3, "explain": "Plus water vapour and dust particles."}, {"topic": "AirFoundations", "q": "Most abundant gas in air:", "options": ["Oxygen", "Nitrogen", "Argon", "CO2"], "correct": 1, "explain": "78% nitrogen."}, {"topic": "AirFoundations", "q": "Oxygen percentage in air:", "options": ["20.95%", "50%", "78%", "2%"], "correct": 0, "explain": "About 21%."}, {"topic": "AirFoundations", "q": "Argon percentage in air:", "options": ["10%", "Music", "Random", "0.93%"], "correct": 3, "explain": "Third most abundant element in atmosphere."}, {"topic": "AirFoundations", "q": "CO2 in air is approximately:", "options": ["10%", "Random", "50%", "0.04%"], "correct": 3, "explain": "Trace gas but increasing due to industrialisation."}, {"topic": "AirFoundations", "q": "Trace gases are gases:", "options": ["Random", "Present in atmosphere in very small amounts", "Most abundant", "Random"], "correct": 1, "explain": "Includes CO2 and others."}, {"topic": "AirFoundations", "q": "Molar mass of dry air:", "options": ["28.97 g/mol", "18 g/mol", "100 g/mol", "Random"], "correct": 0, "explain": "Average for atmospheric mixture."}, {"topic": "AirFoundations", "q": "Water vapour in atmosphere varies:", "options": ["About 0.01% to 4.24% depending on temperature", "Constant", "Always 50%", "Random"], "correct": 0, "explain": "Highly variable."}, {"topic": "AirFoundations", "q": "Greenhouse gases in air include:", "options": ["Random", "Just nitrogen", "CO2, methane, water vapour", "Music"], "correct": 2, "explain": "Trap heat in atmosphere."}, {"topic": "AirFoundations", "q": "Dust particles in air:", "options": ["Random", "Music", "Just smoke", "Fine solid particles from various sources"], "correct": 3, "explain": "Atmospheric dust = Aeolian."}, {"topic": "AirFoundations", "q": "Coal dust causes:", "options": ["Respiratory diseases", "Random", "Just colour", "Music"], "correct": 0, "explain": "Pneumoconiosis (black lung)."}, {"topic": "AirFoundations", "q": "Common air pollutants (criteria) include:", "options": ["Random", "Just nitrogen", "CO, NO2, O3, PM, lead, SO2", "Music"], "correct": 2, "explain": "Six criteria pollutants per US EPA."}, {"topic": "AirFoundations", "q": "Standard temperature:", "options": ["100°C", "Random", "273.15K (0°C)", "Music"], "correct": 2, "explain": "Reference for gas calculations."}, {"topic": "AirFoundations", "q": "Standard pressure:", "options": ["Music", "100 atm", "Random", "1 atm"], "correct": 3, "explain": "Reference for gas calculations."}, {"topic": "AirPollutants", "q": "Carbon monoxide (CO) is produced by:", "options": ["Complete combustion", "Incomplete combustion of carbon-containing substances", "Photosynthesis", "Random"], "correct": 1, "explain": "Insufficient oxygen during burning."}, {"topic": "AirPollutants", "q": "CO is dangerous because it:", "options": ["Just smells bad", "Binds haemoglobin 210x more strongly than oxygen", "Random", "Music"], "correct": 1, "explain": "Disrupts oxygen transport."}, {"topic": "AirPollutants", "q": "CO is detectable by:", "options": ["Smell", "Taste", "CO detector - it's odourless and colourless", "Random"], "correct": 2, "explain": "Sensors required."}, {"topic": "AirPollutants", "q": "Sulphur dioxide (SO2) is:", "options": ["Random", "Colourless, pungent, sour-tasting irritant gas", "Random", "Music"], "correct": 1, "explain": "Pungent at moderate levels."}, {"topic": "AirPollutants", "q": "SO2 source includes:", "options": ["Coal/petroleum combustion, volcanoes, shipping", "Random", "Just plants", "Music"], "correct": 0, "explain": "Sulphur in fossil fuels burns to SO2."}, {"topic": "AirPollutants", "q": "SO2 oxidises in atmosphere to:", "options": ["Random", "Just gas", "Acid rain (precipitation pH 4.2-4.8)", "Music"], "correct": 2, "explain": "Lasting damage to ecosystems and buildings."}, {"topic": "AirPollutants", "q": "SO2 EU one-hour limit:", "options": ["1 mg/m3", "100 mg/m3", "350 micrograms per m3", "Random"], "correct": 2, "explain": "May be exceeded max 24 times/year."}, {"topic": "AirPollutants", "q": "SO2 daily limit:", "options": ["1000 micrograms per m3", "125 micrograms per m3", "Random", "Music"], "correct": 1, "explain": "Max 3 exceedances per year."}, {"topic": "AirPollutants", "q": "SO2 destroys:", "options": ["Random", "Music", "Random", "Vitamin B12 - prolonged exposure causes anaemia"], "correct": 3, "explain": "Blood formation impairment."}, {"topic": "AirPollutants", "q": "CO normal indoor concentration:", "options": ["100 mg/m3", "Random", "0.6-6 mg/m3", "Music"], "correct": 2, "explain": "Background levels."}, {"topic": "AirPollutants", "q": "In unventilated rooms with gas burners:", "options": ["Random", "30 mg/m3 CO easily reached", "No CO", "Music"], "correct": 1, "explain": "Combustion sources accumulate CO."}, {"topic": "AirPollutants", "q": "Dangerous CO concentration leading to death in 1-2 minutes:", "options": ["1 ppm", "100 ppm", "1.28% (12,800 ppm)", "Random"], "correct": 2, "explain": "Acute fatal level."}, {"topic": "AirPollutants", "q": "CO2 is:", "options": ["Random", "Music", "Always smelly", "Odourless at low concentrations, pungent at high"], "correct": 3, "explain": "Sensory detection only at high levels."}, {"topic": "AirPollutants", "q": "Indoor CO2 limit (Federal Environment Agency):", "options": ["100 ppm", "Random", "100,000 ppm", "1,000 ppm"], "correct": 3, "explain": "Above this, ventilate."}, {"topic": "AirPollutants", "q": "Lethal CO2 concentration (~30-60 min exposure):", "options": ["100 ppm", "Music", "Random", "80,000 ppm"], "correct": 3, "explain": "Respiratory distress and death."}, {"topic": "AirModeling", "q": "Air quality modeling uses:", "options": ["Random", "Mathematics and computer programs to estimate pollutant concentrations", "Just measurement", "Music"], "correct": 1, "explain": "Predictive computational tool."}, {"topic": "AirModeling", "q": "Air quality modeling is approved by:", "options": ["US EPA", "Random", "Random", "Music"], "correct": 0, "explain": "Regulatory acceptance."}, {"topic": "AirModeling", "q": "Air dispersion model simulates:", "options": ["Random", "Just monitoring", "How air pollutants disperse and react in atmosphere", "Music"], "correct": 2, "explain": "Pollution transport modeling."}, {"topic": "AirModeling", "q": "Modeling advantages over monitoring:", "options": ["Random", "Faster results, multiple sources/locations evaluated", "Always slower", "Music"], "correct": 1, "explain": "Hours/days vs months/years."}, {"topic": "AirModeling", "q": "Model inputs include:", "options": ["Random", "Music", "Random", "Emissions data, stack info, meteorological data"], "correct": 3, "explain": "Multi-component input."}, {"topic": "AirModeling", "q": "Air quality meter functions:", "options": ["Detect, measure, monitor humidity, temperature, gas levels", "Random", "Just temperature", "Music"], "correct": 0, "explain": "Multi-parameter device."}, {"topic": "AirModeling", "q": "Indoor air quality meter detects:", "options": ["Random", "Just one gas", "CO2, VOCs, CO, NO2, O2, O3, refrigerants", "Music"], "correct": 2, "explain": "Multiple gas detection capabilities."}, {"topic": "AirModeling", "q": "Auto-calibration in air quality meters:", "options": ["Random", "Allows easy calibration of gas detector", "Manual only", "Music"], "correct": 1, "explain": "Convenience feature."}, {"topic": "AirModeling", "q": "Particle counters measure:", "options": ["Random", "Music", "Heavy metals", "Number of particles per volume of air"], "correct": 3, "explain": "Particulate matter assessment."}, {"topic": "AirModeling", "q": "Stack monitoring measures:", "options": ["Random", "Pollutant emissions at industrial source", "Just ambient", "Music"], "correct": 1, "explain": "Source emissions assessment."}, {"topic": "AirTech", "q": "Six criteria air pollutants:", "options": ["CO, lead, ozone, PM, NO2, SO2", "Random", "Just two", "Music"], "correct": 0, "explain": "Common air pollutants per US EPA."}, {"topic": "AirTech", "q": "PM2.5 refers to particles:", "options": ["More than 10 micrometres", "Less than 2.5 micrometres", "100 micrometres", "Random"], "correct": 1, "explain": "Fine particles, deeply respirable."}, {"topic": "AirTech", "q": "PM10 refers to particles:", "options": ["Less than 10 micrometres", "More than 10", "Less than 2.5", "Random"], "correct": 0, "explain": "Inhalable coarse and fine."}, {"topic": "AirTech", "q": "Ozone (O3) at ground level:", "options": ["Always good", "Always healthy", "Pollutant - respiratory irritant", "Random"], "correct": 2, "explain": "Stratospheric ozone is good; ground-level is harmful."}, {"topic": "AirTech", "q": "NO2 health effects include:", "options": ["Random", "Respiratory irritation, asthma exacerbation", "Just colour", "Music"], "correct": 1, "explain": "Lung effects from traffic emissions."}, {"topic": "AirTech", "q": "Lead in air comes from:", "options": ["Random", "Just food", "Historical leaded petrol, lead industries, mining", "Music"], "correct": 2, "explain": "Now mostly from industrial point sources."}, {"topic": "AirTech", "q": "Air Quality Index (AQI):", "options": ["Random", "Music", "Just one pollutant", "Composite measure communicating air quality to public"], "correct": 3, "explain": "Public-facing health communication."}, {"topic": "AirTech", "q": "Mobile pollution sources:", "options": ["Buildings", "Random", "Stationary industries", "Vehicles"], "correct": 3, "explain": "Cars, trucks, buses, aircraft."}, {"topic": "AirTech", "q": "Stationary pollution sources:", "options": ["Vehicles", "Just transport", "Industrial facilities, power plants, refineries", "Random"], "correct": 2, "explain": "Fixed location emitters."}, {"topic": "AirTech", "q": "Indoor air pollutants include:", "options": ["Random", "Music", "Just outdoor", "Tobacco smoke, mould, VOCs, radon, formaldehyde"], "correct": 3, "explain": "Many indoor sources of concern."}, {"topic": "Hazards", "q": "Phosgene is:", "options": ["Highly toxic gas (used as chemical weapon WW1)", "Random", "Safe", "Music"], "correct": 0, "explain": "Industrial chemical of concern."}, {"topic": "Hazards", "q": "Hydrogen sulphide (H2S):", "options": ["Random", "Music", "Safe", "Toxic gas with rotten egg smell, lethal at high concentration"], "correct": 3, "explain": "Common industrial hazard."}, {"topic": "Hazards", "q": "Phosphine (PH3):", "options": ["Highly toxic gas used in fumigation", "Random", "Safe", "Music"], "correct": 0, "explain": "Grain storage and pest control."}, {"topic": "Hazards", "q": "Formaldehyde (HCHO):", "options": ["Random", "Safe", "VOC and known carcinogen, found in many indoor products", "Music"], "correct": 2, "explain": "Building materials, embalming."}, {"topic": "Hazards", "q": "VOC stands for:", "options": ["Random", "Volatile Organic Compound", "Vital Organic Carbon", "Vapour Of Combustion"], "correct": 1, "explain": "Carbon-based gases evaporating easily."}, {"topic": "Hazards", "q": "Refrigerants of concern (CFC, HFC):", "options": ["Random", "Music", "Just colour", "Ozone depletion potential, greenhouse gases"], "correct": 3, "explain": "Environmental impact."}, {"topic": "Hazards", "q": "Acid rain pH range:", "options": ["7-8", "Random", "1-2", "4.2-4.8"], "correct": 3, "explain": "Acidic precipitation from SO2/NOx."}, {"topic": "Hazards", "q": "Particulate matter health effects:", "options": ["No effect", "Cardiovascular and respiratory disease", "Just allergies", "Random"], "correct": 1, "explain": "Significant mortality impact."}, {"topic": "Hazards", "q": "Asbestos exposure causes:", "options": ["Asbestosis, mesothelioma, lung cancer", "Random", "Skin only", "Music"], "correct": 0, "explain": "Long latency lung diseases."}, {"topic": "Hazards", "q": "Air pollution leading to NCDs:", "options": ["Linked to heart disease, stroke, COPD, lung cancer", "Random", "No link", "Music"], "correct": 0, "explain": "Major non-communicable disease driver."}];
+const FLASHCARDS = [{"term": "Water Quality", "def": "Biological, physical, chemical and radiological properties of water compared to a given standard."}, {"term": "Water Quality Criteria (CQC)", "def": "Scientific information about effects of pollutants on specific water uses."}, {"term": "Water Quality Standard", "def": "Achieved through regular water analysis."}, {"term": "Water Analysis Categories", "def": "Physical, Chemical, Microbial, Radiological."}, {"term": "Physical Water Tests", "def": "Turbidity, color, taste, odour."}, {"term": "Chemical Water Tests", "def": "pH, hardness, chlorides, residual chlorine, iron, manganese, organic matter, nitrate."}, {"term": "Microbial Water Tests", "def": "Coliforms (E. coli), fungi (Candida), arboviruses, parasites."}, {"term": "Coliform Group", "def": "Indicator bacteria from intestines (colon). Signal of faecal contamination."}, {"term": "Methemoglobinemia", "def": "Blue baby syndrome from excess nitrate in water."}, {"term": "Standard Plate Count", "def": "Total bacterial count - one of two main bacteriological tests."}, {"term": "Heavy Metals", "def": "Metals with density >5x water. Toxic at low concentrations."}, {"term": "Arsenic", "def": "From ceramics, tanneries, pesticides. Causes arsenosis, cancer. Limit 0.050 mg/L."}, {"term": "Lead", "def": "From printing, dyeing, refineries. Limit 0.1 mg/L. Sustained exposure fatal."}, {"term": "Copper", "def": "From pesticides/algicides. Limit 1.5 mg/L. Taste-producing not toxic."}, {"term": "Cadmium", "def": "From electroplating, mining. Accumulates in kidneys/pancreas. Limit 0.01 mg/L. Bone disease."}, {"term": "Chromium", "def": "Toxic form is hexavalent (Cr6+). Limit 0.05 mg/L. Respiratory cancer."}, {"term": "Mercury", "def": "Highly poisonous. Industrial wastes. Brain damage, especially fetuses."}, {"term": "Air Quality Management", "def": "Activities a regulatory authority undertakes to protect human health and environment from air pollution."}, {"term": "Air Composition", "def": "78.09% nitrogen, 20.95% oxygen, 0.93% argon, 0.04% CO2, plus water vapour."}, {"term": "Trace Gases", "def": "Atmospheric gases present in very small amounts (e.g., CO2, methane, ozone)."}, {"term": "Dust Particles", "def": "Fine solid particles from volcanoes, pollution, soil; called Aeolian particles."}, {"term": "Six Criteria Air Pollutants", "def": "CO, NO2, O3, PM, lead, SO2."}, {"term": "Air Quality Modeling", "def": "Mathematics and computer programs estimating pollutant concentrations from emission sources."}, {"term": "Air Dispersion Model", "def": "Simulates how pollutants disperse and react in the atmosphere to affect ambient quality."}, {"term": "Carbon Monoxide", "def": "Produced by incomplete combustion. Odourless, colourless, binds haemoglobin 210x more than oxygen."}, {"term": "Sulphur Dioxide", "def": "Colourless pungent irritant gas. From coal/petroleum combustion. Acid rain producer."}, {"term": "SO2 EU 1-hour Limit", "def": "350 micrograms per m3, max 24 exceedances/year."}, {"term": "SO2 Daily Limit", "def": "125 micrograms per m3, max 3 exceedances/year."}, {"term": "CO2 Indoor Limit", "def": "1,000 ppm Federal Environment Agency recommendation."}, {"term": "PM10", "def": "Particles less than 10 micrometres - inhalable."}, {"term": "PM2.5", "def": "Fine particles less than 2.5 micrometres - deeply respirable."}, {"term": "Acid Rain", "def": "Precipitation pH 4.2-4.8 from SO2 and NOx in atmosphere."}, {"term": "Ground-level Ozone", "def": "Pollutant respiratory irritant. Different from beneficial stratospheric ozone."}, {"term": "Air Quality Index (AQI)", "def": "Composite measure communicating air quality to the public."}, {"term": "Mobile Sources", "def": "Vehicles - cars, trucks, buses, aircraft."}, {"term": "Stationary Sources", "def": "Industrial facilities, power plants, refineries."}, {"term": "Indoor Air Pollutants", "def": "Tobacco smoke, mould, VOCs, radon, formaldehyde."}, {"term": "VOC", "def": "Volatile Organic Compound. Carbon-based gases evaporating easily. Many are carcinogens."}, {"term": "Formaldehyde", "def": "VOC carcinogen. Found in building materials, furniture."}, {"term": "Phosgene", "def": "Highly toxic gas used as chemical weapon in WW1."}, {"term": "H2S", "def": "Hydrogen sulphide. Toxic gas, rotten egg smell, lethal at high concentrations."}, {"term": "Phosphine (PH3)", "def": "Highly toxic gas used in fumigation."}, {"term": "Refrigerants of Concern", "def": "CFC and HFC - ozone depletion potential and greenhouse gas effects."}, {"term": "Effluent Discharge", "def": "Must meet treatment standards before release. Regulated to protect waters."}, {"term": "Watershed Protection", "def": "Land use control, riparian zones, sewage management, agricultural BMPs."}, {"term": "WHO Drinking Water Guidelines", "def": "Reference document used by Nigeria with modifications."}, {"term": "Asbestos", "def": "Causes asbestosis, mesothelioma, lung cancer. Long latency."}, {"term": "Vitamin B12 Destruction", "def": "Long-term SO2 exposure - causes anaemia from impaired blood formation."}, {"term": "CO Death Concentration", "def": "1.28% (12,800 ppm) leads to death within 1-2 minutes."}, {"term": "CO2 Death Concentration", "def": "~80,000 ppm leads to respiratory distress and death after 30-60 minutes."}];
+const ESSAYS = [{"title": "Define water quality and discuss methods of water analysis", "points": ["Definition: biological, physical, chemical, radiological properties", "Water Quality Criteria (CQC) and standards", "Four analysis categories: physical, chemical, microbial, radiological", "Physical: turbidity, colour, taste, odour", "Chemical: pH, hardness, chlorides, residual chlorine, heavy metals", "Microbial: coliforms, fungi, viruses, parasites", "Importance for public health"]}, {"title": "Discuss heavy metals in drinking water - sources, effects, limits", "points": ["Definition: density >5x water", "Sources: industrial discharge, mining, sewage", "Major metals: arsenic, lead, copper, cadmium, chromium, mercury", "Specific effects per metal", "WHO permissible limits", "Bioaccumulation and chronic effects", "Treatment methods", "Prevention"]}, {"title": "Discuss arsenic contamination of water supplies", "points": ["Sources: ceramics, chemical industries, tanneries, pesticides", "Health effects: arsenosis, liver/heart damage, carcinogenic", "Permissible limit: 0.050 mg/L", "Geographic distribution (Bangladesh, India)", "Monitoring methods", "Treatment: coagulation, adsorption, oxidation", "Mitigation strategies"]}, {"title": "Discuss lead contamination of water and its health effects", "points": ["Sources: printing, dyeing, oil refineries, old plumbing", "Health effects: neurological in children, anaemia, hypertension", "Sustained exposure 3+ months potentially fatal", "Permissible limit: 0.1 mg/L", "Particularly toxic in soft waters", "Treatment methods", "Prevention: pipe replacement, treatment"]}, {"title": "Discuss cadmium contamination and Itai-Itai disease", "points": ["Sources: electroplating, mining, zinc galvanizing", "Accumulation: kidneys, pancreas", "Disease: painful bone disease (Itai-Itai)", "Permissible limit: 0.01 mg/L", "Japan epidemic context", "Mining region issues", "Treatment and prevention"]}, {"title": "Discuss the procedures for water quality monitoring and surveillance", "points": ["Definition", "Objectives: detection, trends, response", "Sampling: location, frequency, technique", "Laboratory analysis", "Regular reporting", "Surveillance: continuous oversight", "Audit and verification", "Public health response"]}, {"title": "Discuss methods of protecting water sources", "points": ["Watershed protection", "Riparian zones", "Land use planning", "Sewage management", "Agricultural best management practices", "Industrial discharge regulation", "Source identification", "Surveillance", "Community education", "Regulations"]}, {"title": "Define air quality management and discuss its importance", "points": ["Definition: regulatory activities to protect health/environment", "Components: monitoring, modeling, emissions inventory, regulation", "Health stakes", "Economic costs", "International context", "Nigerian framework", "NESREA role", "Public communication"]}, {"title": "Discuss the composition of air", "points": ["78.09% nitrogen, 20.95% oxygen, 0.93% argon", "0.04% CO2 increasing due to industrialisation", "Other trace gases", "Water vapour 0.01-4.24% variable", "Dust particles", "Each component's role", "Standard temperature and pressure"]}, {"title": "Discuss common air pollutants and their effects", "points": ["Six criteria pollutants per US EPA", "CO: incomplete combustion, binds haemoglobin", "SO2: coal/petroleum, acid rain", "NOx: traffic, asthma", "O3: ground-level pollutant", "PM: cardiovascular, respiratory", "Lead: neurological, especially children", "Sources, effects, limits"]}, {"title": "Discuss carbon monoxide as an air pollutant", "points": ["Source: incomplete combustion", "Properties: odourless, colourless, tasteless", "Mechanism: binds haemoglobin 210x more than O2", "Disrupts oxygen transport", "Indoor sources: gas burners, cigarettes", "Limits per EPA", "1.28% concentration: death in 1-2 minutes", "Detectors essential"]}, {"title": "Discuss sulphur dioxide and acid rain", "points": ["Source: coal, petroleum, volcanoes, shipping", "Properties: colourless, pungent, irritant", "SO2 oxidation in atmosphere", "Acid rain pH 4.2-4.8", "Damage: ecosystems, buildings, materials", "Health effects: respiratory, vitamin B12 destruction", "EU limits: 350 1-hr, 125 daily", "Control: scrubbers, low-sulphur fuels"]}, {"title": "Discuss measurement of air quality", "points": ["Monitoring vs modeling", "Common instruments: high-volume sampler, gas detectors, particle counters", "CO meter, CO2 meter, SO2 detector, multi-gas detector", "Stationary vs mobile monitoring", "Calibration", "Quality assurance", "Data interpretation"]}, {"title": "Discuss air quality modeling", "points": ["Definition and purpose", "Mathematics and computer programs", "US EPA approval", "Inputs: emissions, stack info, meteorological data", "Air dispersion models", "Advantages over monitoring: faster, multiple sources", "Predictive capability for urban growth", "Software examples"]}, {"title": "Discuss air quality assessment tools and technologies", "points": ["Indoor air quality meters", "Multi-gas detection: CO, CO2, NO2, O2, O3, VOCs", "Auto-calibration", "Data logging and computer transfer", "Particle counters", "Stack monitoring", "Personal sampling", "Data interpretation"]}, {"title": "Discuss indoor air quality issues", "points": ["Sources: tobacco, mould, VOCs, radon, formaldehyde, combustion", "Health effects: respiratory, cancer, neurological", "Sick building syndrome", "Building materials", "Furnishings", "Ventilation rates", "Maintenance", "Personal protection"]}, {"title": "Discuss radon as an environmental health concern", "points": ["Naturally occurring radioactive gas", "Source: uranium decay in soil", "Accumulates in homes", "Leading cause of lung cancer in non-smokers", "Detection: passive (charcoal) and active monitors", "Mitigation: soil suction system", "Building codes", "Public awareness"]}, {"title": "Discuss particulate matter and its health effects", "points": ["PM10 and PM2.5", "Sources: combustion, dust, secondary formation", "Deeply respirable", "Health effects: cardiovascular, respiratory, mortality", "WHO guidelines", "Vulnerable populations", "Mitigation: emission controls, urban planning", "Personal protection: masks, indoor air filtration"]}, {"title": "Discuss the role of vegetation in air quality", "points": ["Trees as natural air filters", "Reduction of PM, gaseous pollutants", "Urban heat island reduction", "Biogenic VOCs (some pollutant precursors)", "Carbon sequestration", "Allergy considerations (pollen)", "Urban planning", "Integrated approach"]}, {"title": "Discuss greenhouse gases and climate change", "points": ["Major GHGs: CO2, methane, N2O, water vapour, ozone", "Atmospheric concentrations rising", "Sources: fossil fuels, agriculture, deforestation, industry", "Greenhouse effect mechanism", "Climate impacts", "Health effects of climate change", "Mitigation", "Adaptation"]}, {"title": "Discuss water quality standards and Nigerian context", "points": ["WHO guidelines as foundation", "Nigerian Standard for Drinking Water Quality (NSDWQ)", "Adaptation for local context", "NAFDAC role for packaged water", "Federal Ministry of Water Resources", "NESREA enforcement", "Implementation challenges", "Improvement strategies"]}, {"title": "Discuss the procedure for water quality testing in laboratory", "points": ["Sample collection: aseptic, representative", "Storage and transport", "Physical: turbidity, colour, taste, odour", "Chemical: pH meter, titration, AAS", "Microbial: MPN, membrane filtration", "Quality control: blanks, duplicates", "Reporting", "Standards comparison"]}, {"title": "Discuss international treaties and conventions on water", "points": ["UN Watercourses Convention", "Ramsar Convention on wetlands", "SDG 6: clean water and sanitation", "WHO drinking water guidelines", "Transboundary water management", "African Water Convention", "Regional treaties"]}, {"title": "Discuss sources of air pollution in Nigeria", "points": ["Mobile: vehicle emissions", "Stationary: industries, power plants, refineries", "Residential: biomass burning, generator use", "Agricultural: open burning", "Natural: dust, harmattan, wildfires", "Indoor: tobacco, cooking fuels", "Sectoral mitigation", "Policy needs"]}, {"title": "Discuss the procedure for monitoring sulphur dioxide", "points": ["Pump suction-type compound gas detectors", "Pararosaniline method (lab)", "Continuous monitoring stations", "Sampling network design", "Calibration", "Data interpretation", "Reporting", "Standards comparison: 350 micrograms 1hr, 125 micrograms daily"]}];
+const QUICK_REFERENCE = [{"category": "Heavy Metal Limits", "items": [{"label": "Arsenic", "desc": "0.050 mg/L"}, {"label": "Lead", "desc": "0.1 mg/L"}, {"label": "Copper", "desc": "1.5 mg/L"}, {"label": "Cadmium", "desc": "0.01 mg/L"}, {"label": "Chromium", "desc": "0.05 mg/L"}]}, {"category": "Air Composition", "items": [{"label": "78.09%", "desc": "Nitrogen"}, {"label": "20.95%", "desc": "Oxygen"}, {"label": "0.93%", "desc": "Argon"}, {"label": "0.04%", "desc": "CO2"}, {"label": "variable", "desc": "Water vapour 0.01-4.24%"}]}, {"category": "Air Pollutant Limits", "items": [{"label": "SO2 1hr", "desc": "350 micrograms per m3"}, {"label": "SO2 daily", "desc": "125 micrograms per m3"}, {"label": "CO 24hr", "desc": "4 mg/m3 (EPA)"}, {"label": "CO 8hr", "desc": "10 mg/m3 (EPA)"}, {"label": "CO2 indoor", "desc": "1,000 ppm threshold"}, {"label": "CO 1.28%", "desc": "Lethal in 1-2 min"}]}, {"category": "6 Criteria Pollutants", "items": [{"label": "CO", "desc": "Carbon Monoxide"}, {"label": "NO2", "desc": "Nitrogen Dioxide"}, {"label": "O3", "desc": "Ozone"}, {"label": "PM", "desc": "Particulate Matter"}, {"label": "Pb", "desc": "Lead"}, {"label": "SO2", "desc": "Sulfur Dioxide"}]}, {"category": "Water Test Categories", "items": [{"label": "Physical", "desc": "Turbidity, colour, taste, odour"}, {"label": "Chemical", "desc": "pH, hardness, metals, organic matter"}, {"label": "Microbial", "desc": "Coliforms, fungi, viruses, parasites"}, {"label": "Radiological", "desc": "Radioactive contamination"}]}, {"category": "PM Categories", "items": [{"label": "PM10", "desc": "<10 micrometres - inhalable"}, {"label": "PM2.5", "desc": "<2.5 micrometres - deeply respirable"}, {"label": "Fine PM", "desc": "Cardiovascular and respiratory disease"}]}];
+
+function App() {
+  const [mode, setMode] = useState('home');
+  const [topicFilter, setTopicFilter] = useState('All');
+  const [questionIndex, setQuestionIndex] = useState(0);
+  const [selected, setSelected] = useState(null);
+  const [revealed, setRevealed] = useState(false);
+  const [score, setScore] = useState({ correct: 0, total: 0 });
+  const [shuffled, setShuffled] = useState(false);
+  const [questionOrder, setQuestionOrder] = useState([]);
+  const [flashIndex, setFlashIndex] = useState(0);
+  const [flashFlipped, setFlashFlipped] = useState(false);
+  const [flashOrder, setFlashOrder] = useState([]);
+  const [essayIndex, setEssayIndex] = useState(0);
+  const [revealedEssay, setRevealedEssay] = useState(false);
+  const [showAnswer, setShowAnswer] = useState(false);
+
+  const topics = ['All', ...new Set(MCQ_BANK.map(q => q.topic))];
+
+  const filteredQuestions = useMemo(() => {
+    if (topicFilter === 'All') return MCQ_BANK;
+    return MCQ_BANK.filter(q => q.topic === topicFilter);
+  }, [topicFilter]);
+
+  const [optionMaps, setOptionMaps] = useState({});
+
+  useEffect(() => {
+    const order = filteredQuestions.map((_, i) => i);
+    const maps = {};
+    if (shuffled) {
+      for (let i = order.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [order[i], order[j]] = [order[j], order[i]];
+      }
+      // Also shuffle option order within each question
+      filteredQuestions.forEach((q, qi) => {
+        const indices = q.options.map((_, i) => i);
+        for (let i = indices.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [indices[i], indices[j]] = [indices[j], indices[i]];
+        }
+        maps[qi] = indices;
+      });
+    } else {
+      filteredQuestions.forEach((q, qi) => {
+        maps[qi] = q.options.map((_, i) => i);
+      });
+    }
+    setOptionMaps(maps);
+    setQuestionOrder(order);
+    setQuestionIndex(0);
+    setSelected(null);
+    setRevealed(false);
+    setScore({ correct: 0, total: 0 });
+  }, [topicFilter, shuffled, filteredQuestions]);
+
+  useEffect(() => { setFlashOrder(FLASHCARDS.map((_, i) => i)); }, []);
+
+  const currentQ = filteredQuestions[questionOrder[questionIndex]];
+  const currentOptionMap = currentQ ? (optionMaps[questionOrder[questionIndex]] || currentQ.options.map((_, i) => i)) : [];
+
+  const handleAnswer = (displayIdx) => {
+    if (revealed) return;
+    const realIdx = currentOptionMap[displayIdx];
+    setSelected(displayIdx);
+    setRevealed(true);
+    setScore(s => ({ correct: s.correct + (realIdx === currentQ.correct ? 1 : 0), total: s.total + 1 }));
+  };
+
+  const nextQuestion = () => {
+    if (questionIndex < questionOrder.length - 1) {
+      setQuestionIndex(i => i + 1);
+      setSelected(null);
+      setRevealed(false);
+    }
+  };
+
+  const prevQuestion = () => {
+    if (questionIndex > 0) {
+      setQuestionIndex(i => i - 1);
+      setSelected(null);
+      setRevealed(false);
+    }
+  };
+
+  const restart = () => {
+    setQuestionIndex(0);
+    setSelected(null);
+    setRevealed(false);
+    setScore({ correct: 0, total: 0 });
+  };
+
+  const shuffleFlash = () => {
+    const order = [...flashOrder];
+    for (let i = order.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+    setFlashOrder(order);
+    setFlashIndex(0);
+    setFlashFlipped(false);
+  };
+
+  const currentFlash = FLASHCARDS[flashOrder[flashIndex]];
+  const currentEssay = ESSAYS[essayIndex];
+
+  return (
+    <div className="min-h-screen text-stone-100" style={{ background: 'radial-gradient(ellipse at top, #2a1f17 0%, #1a1410 50%, #0f0c0a 100%)', fontFamily: '"Plus Jakarta Sans", -apple-system, sans-serif' }}>
+      <div className="grain-overlay">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10 relative" style={{ zIndex: 2 }}>
+
+          <header className="mb-8 sm:mb-12 fade-in">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="h-px w-8 bg-amber-600/60"></div>
+              <span className="text-xs uppercase tracking-[0.3em] text-amber-500/80">EHS 503 · Day 6</span>
+            </div>
+            <h1 className="display-font text-4xl sm:text-6xl font-medium leading-[0.95] mb-3" style={{ color: '#f5e8d0' }}>
+              Water/Air Quality<br/>
+              <span className="italic" style={{ color: '#d4a574' }}>Management</span>
+            </h1>
+            <p className="text-stone-400 text-sm sm:text-base max-w-xl">Master water analysis methods, heavy metals, air composition, and criteria pollutants.</p>
+          </header>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-6 sm:mb-8">
+            {[
+              { id: 'home', label: 'Quiz', icon: Target, desc: MCQ_BANK.length + ' MCQs' },
+              { id: 'flash', label: 'Flashcards', icon: Layers, desc: FLASHCARDS.length + ' cards' },
+              { id: 'essay', label: 'Essays', icon: FileText, desc: ESSAYS.length + ' outlines' },
+              { id: 'quick', label: 'Quick Ref', icon: BookOpen, desc: 'Drill cards' }
+            ].map(m => {
+              const I = m.icon;
+              const active = mode === m.id;
+              return (
+                <button key={m.id} onClick={() => setMode(m.id)} className={`group relative p-3 sm:p-4 rounded-lg border transition-all text-left ${active ? 'border-amber-500/60 bg-amber-950/30' : 'border-stone-800 hover:border-stone-700 bg-stone-950/40'}`}>
+                  <I size={18} className={active ? 'text-amber-400' : 'text-stone-400'} />
+                  <div className={`mt-2 text-sm font-medium ${active ? 'text-amber-100' : 'text-stone-200'}`}>{m.label}</div>
+                  <div className="text-[10px] sm:text-xs text-stone-500 mt-0.5">{m.desc}</div>
+                </button>
+              );
+            })}
+          </div>
+
+          {mode === 'home' && currentQ && (
+            <div className="fade-in">
+              <div className="bg-stone-950/60 border border-stone-800 rounded-lg p-4 mb-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="text-xs text-stone-500 uppercase tracking-wider">Question</div>
+                    <div className="display-font text-2xl text-amber-400">{questionIndex + 1}<span className="text-stone-600">/{questionOrder.length}</span></div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <div className="text-xs text-stone-500 uppercase tracking-wider">Score</div>
+                      <div className="display-font text-2xl">
+                        <span style={{ color: score.total > 0 && score.correct/score.total >= 0.7 ? '#86efac' : '#d4a574' }}>{score.correct}</span>
+                        <span className="text-stone-600">/{score.total}</span>
+                      </div>
+                    </div>
+                    <button onClick={restart} className="p-2 hover:bg-stone-800 rounded transition-colors" title="Restart"><RotateCcw size={16} className="text-stone-400" /></button>
+                    <button onClick={() => setShuffled(s => !s)} className={`p-2 rounded transition-colors ${shuffled ? 'bg-amber-950 text-amber-400' : 'hover:bg-stone-800 text-stone-400'}`} title="Shuffle"><Shuffle size={16} /></button>
+                  </div>
+                </div>
+                <div className="h-1 bg-stone-900 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-amber-700 to-amber-500 transition-all duration-500" style={{ width: `${((questionIndex + 1) / questionOrder.length) * 100}%` }}></div>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-1.5">
+                  {topics.map(t => (
+                    <button key={t} onClick={() => setTopicFilter(t)} className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${topicFilter === t ? 'border-amber-600 bg-amber-950/50 text-amber-200' : 'border-stone-800 text-stone-400 hover:border-stone-700'}`}>{t}</button>
+                  ))}
+                </div>
+              </div>
+
+              <div key={questionIndex} className="bg-stone-950/60 border border-stone-800 rounded-lg p-5 sm:p-7 scale-in">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.2em] text-amber-500/80 px-2 py-1 rounded-full bg-amber-950/30 border border-amber-900/40">
+                    <Activity size={14} />
+                    {currentQ.topic}
+                  </span>
+                </div>
+                <h2 className="display-font text-xl sm:text-2xl text-stone-100 leading-snug mb-6">{currentQ.q}</h2>
+                <div className="space-y-2">
+                  {currentOptionMap.map((realIdx, displayIdx) => {
+                    const opt = currentQ.options[realIdx];
+                    const isCorrect = realIdx === currentQ.correct;
+                    const isSelected = selected === displayIdx;
+                    let cls = 'border-stone-800 hover:border-stone-700 bg-stone-900/30';
+                    if (revealed) {
+                      if (isCorrect) cls = 'border-emerald-700 bg-emerald-950/40 text-emerald-100';
+                      else if (isSelected && !isCorrect) cls = 'border-rose-800 bg-rose-950/40 text-rose-200';
+                      else cls = 'border-stone-800 bg-stone-950/30 opacity-50';
+                    }
+                    return (
+                      <button key={displayIdx} onClick={() => handleAnswer(displayIdx)} disabled={revealed} className={`w-full text-left p-3 sm:p-4 rounded-lg border transition-all flex items-start gap-3 ${cls}`}>
+                        <div className={`flex-shrink-0 w-7 h-7 rounded-full border flex items-center justify-center text-xs font-medium ${revealed && isCorrect ? 'border-emerald-600 bg-emerald-900 text-emerald-200' : revealed && isSelected && !isCorrect ? 'border-rose-700 bg-rose-900 text-rose-200' : 'border-stone-700 text-stone-400'}`}>
+                          {revealed && isCorrect ? <Check size={14} /> : revealed && isSelected && !isCorrect ? <X size={14} /> : ['A','B','C','D'][displayIdx]}
+                        </div>
+                        <span className="text-sm sm:text-base pt-0.5">{opt}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {revealed && (
+                  <div className="mt-5 p-4 bg-amber-950/20 border-l-2 border-amber-600/60 rounded-r-lg slide-right">
+                    <div className="text-xs uppercase tracking-wider text-amber-500/80 mb-1">Why</div>
+                    <p className="text-sm text-stone-300 leading-relaxed">{currentQ.explain}</p>
+                  </div>
+                )}
+                <div className="flex justify-between items-center mt-6">
+                  <button onClick={prevQuestion} disabled={questionIndex === 0} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                    <ChevronLeft size={16} /> Previous
+                  </button>
+                  {questionIndex === questionOrder.length - 1 && revealed ? (
+                    <div className="flex items-center gap-2 text-amber-400 text-sm">
+                      <Trophy size={16} />
+                      Final score: {score.correct}/{score.total}
+                    </div>
+                  ) : (
+                    <button onClick={nextQuestion} disabled={!revealed || questionIndex === questionOrder.length - 1} className="flex items-center gap-1.5 px-4 py-2 bg-amber-700 hover:bg-amber-600 disabled:opacity-30 disabled:cursor-not-allowed text-stone-50 rounded-md text-sm font-medium transition-colors">
+                      Next <ChevronRight size={16} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {mode === 'flash' && (
+            <div className="fade-in">
+              <div className="bg-stone-950/60 border border-stone-800 rounded-lg p-4 mb-4 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="text-xs text-stone-500 uppercase tracking-wider">Card</div>
+                  <div className="display-font text-2xl text-amber-400">{flashIndex + 1}<span className="text-stone-600">/{FLASHCARDS.length}</span></div>
+                </div>
+                <button onClick={shuffleFlash} className="flex items-center gap-1.5 px-3 py-2 text-stone-300 hover:text-amber-400 border border-stone-800 hover:border-amber-700 rounded-md text-sm transition-colors">
+                  <Shuffle size={14} /> Shuffle
+                </button>
+              </div>
+              <div key={flashIndex} onClick={() => setFlashFlipped(f => !f)} className="bg-gradient-to-br from-stone-900 to-stone-950 border border-stone-800 rounded-lg p-7 sm:p-12 min-h-[280px] sm:min-h-[340px] flex items-center justify-center cursor-pointer hover:border-amber-700/60 transition-colors scale-in">
+                <div className="text-center max-w-2xl">
+                  {!flashFlipped ? (
+                    <>
+                      <div className="text-xs uppercase tracking-[0.3em] text-amber-500/70 mb-4">Term</div>
+                      <h2 className="display-font text-3xl sm:text-4xl font-medium text-stone-100 mb-4">{currentFlash.term}</h2>
+                      <p className="text-xs text-stone-500 mt-6 italic">tap to reveal</p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-xs uppercase tracking-[0.3em] text-amber-500/70 mb-4">Definition</div>
+                      <p className="text-base sm:text-lg text-stone-200 leading-relaxed">{currentFlash.def}</p>
+                      <p className="text-xs text-stone-500 mt-6 italic">tap to flip back</p>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-between items-center mt-4">
+                <button onClick={() => { setFlashIndex(i => Math.max(0, i-1)); setFlashFlipped(false); }} disabled={flashIndex === 0} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  <ChevronLeft size={16} /> Previous
+                </button>
+                <div className="flex-1 mx-4 h-1 bg-stone-900 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-amber-700 to-amber-500" style={{ width: `${((flashIndex + 1) / FLASHCARDS.length) * 100}%` }}></div>
+                </div>
+                <button onClick={() => { setFlashIndex(i => Math.min(FLASHCARDS.length-1, i+1)); setFlashFlipped(false); }} disabled={flashIndex === FLASHCARDS.length-1} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  Next <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {mode === 'essay' && currentEssay && (
+            <div className="fade-in">
+              <div className="bg-stone-950/60 border border-stone-800 rounded-lg p-4 mb-4 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="text-xs text-stone-500 uppercase tracking-wider">Essay</div>
+                  <div className="display-font text-2xl text-amber-400">{essayIndex + 1}<span className="text-stone-600">/{ESSAYS.length}</span></div>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => setRevealedEssay(r => !r)} className="text-xs px-3 py-1.5 border border-stone-800 hover:border-amber-700 rounded-md text-stone-300 hover:text-amber-400 transition-colors">
+                    {revealedEssay ? 'Hide outline' : 'Show outline'}
+                  </button>
+                  {currentEssay.answer && (
+                    <button onClick={() => setShowAnswer(s => !s)} className={`text-xs px-3 py-1.5 border rounded-md transition-colors ${showAnswer ? 'border-amber-600 bg-amber-950/40 text-amber-300' : 'border-stone-800 hover:border-amber-700 text-stone-300 hover:text-amber-400'}`}>
+                      {showAnswer ? 'Hide answer' : 'Show full answer'}
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div key={essayIndex} className="bg-stone-950/60 border border-stone-800 rounded-lg p-6 sm:p-8 scale-in">
+                <h2 className="display-font text-xl sm:text-2xl text-stone-100 leading-snug mb-6 italic">{currentEssay.title}</h2>
+                {!revealedEssay && !showAnswer && (
+                  <div className="text-center py-6">
+                    <p className="text-stone-500 italic mb-1">Try drafting your own outline first.</p>
+                    <p className="text-stone-600 text-sm">Then reveal outline or full answer to compare.</p>
+                  </div>
+                )}
+                {revealedEssay && (
+                  <div className="space-y-3 slide-right mb-6">
+                    <div className="text-xs uppercase tracking-wider text-amber-500/80 mb-2">Skeleton outline</div>
+                    {currentEssay.points.map((pt, i) => (
+                      <div key={i} className="flex gap-3 items-start">
+                        <div className="flex-shrink-0 w-6 h-6 rounded-full border border-amber-700/50 text-amber-400 text-xs flex items-center justify-center mt-0.5">{i+1}</div>
+                        <p className="text-sm text-stone-300 leading-relaxed pt-0.5">{pt}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {showAnswer && currentEssay.answer && (
+                  <div className="slide-right pt-6 border-t border-stone-800">
+                    <div className="text-xs uppercase tracking-wider text-amber-500/80 mb-3">Sample answer</div>
+                    <div className="text-sm sm:text-base text-stone-200 leading-relaxed whitespace-pre-line">{currentEssay.answer}</div>
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-between items-center mt-4">
+                <button onClick={() => { setEssayIndex(i => Math.max(0, i-1)); setRevealedEssay(false); setShowAnswer(false); }} disabled={essayIndex === 0} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  <ChevronLeft size={16} /> Previous
+                </button>
+                <button onClick={() => { setEssayIndex(i => Math.min(ESSAYS.length-1, i+1)); setRevealedEssay(false); setShowAnswer(false); }} disabled={essayIndex === ESSAYS.length-1} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  Next <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {mode === 'quick' && (
+            <div className="fade-in space-y-6">
+              {QUICK_REFERENCE.map(section => (
+                <div key={section.category} className="bg-stone-950/60 border border-stone-800 rounded-lg p-5 sm:p-7">
+                  <div className="flex items-center gap-2 mb-5">
+                    <div className="h-px flex-1 bg-stone-800"></div>
+                    <h3 className="display-font text-lg italic text-amber-400 px-3">{section.category}</h3>
+                    <div className="h-px flex-1 bg-stone-800"></div>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-2 sm:gap-3">
+                    {section.items.map((item, i) => (
+                      <div key={i} className="flex items-start gap-3 p-3 rounded-md border border-stone-800/50 bg-stone-900/30 hover:border-amber-800/50 hover:bg-amber-950/10 transition-colors">
+                        <div className="display-font font-medium text-amber-300 text-base sm:text-lg flex-shrink-0 min-w-[60px]">{item.label}</div>
+                        <p className="text-xs sm:text-sm text-stone-300 pt-1">{item.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <footer className="mt-12 pt-6 border-t border-stone-900 text-center">
+            <p className="text-xs text-stone-600 italic display-font">EHS 503 · Day 6 · Made by Chidinma Nwatu (The Revolutionary Educator)</p>
+          </footer>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+document.getElementById('loading').classList.add('hidden');
+</script>
+</body>
+</html>

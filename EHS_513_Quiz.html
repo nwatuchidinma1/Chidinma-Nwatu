@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a1410">
+<title>EHS 513 — Industrial Hygiene and Safety</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js" crossorigin></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  html, body { background: #0f0c0a; }
+  body { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes scaleIn { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
+  @keyframes slideRight { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: translateX(0); } }
+  .fade-in { animation: fadeIn 0.4s ease-out; }
+  .scale-in { animation: scaleIn 0.3s ease-out; }
+  .slide-right { animation: slideRight 0.4s ease-out; }
+  .display-font { font-family: 'Fraunces', Georgia, serif; font-optical-sizing: auto; }
+  .grain-overlay::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 1;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3CfeColorMatrix values='0 0 0 0 0.6 0 0 0 0 0.4 0 0 0 0 0.2 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.4;
+  }
+  #loading { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; color: #d4a574; font-family: 'Fraunces', serif; font-style: italic; font-size: 18px; }
+  #loading.hidden { display: none; }
+</style>
+</head>
+<body>
+<div id="loading">loading your study pack...</div>
+<div id="root"></div>
+
+<script type="text/babel" data-type="module" data-presets="react">
+const { useState, useEffect, useMemo } = React;
+
+const Icon = ({ children, size = 18, className = '' }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
+);
+const Activity = (p) => <Icon {...p}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></Icon>;
+const RotateCcw = (p) => <Icon {...p}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></Icon>;
+const ChevronLeft = (p) => <Icon {...p}><path d="m15 18-6-6 6-6"/></Icon>;
+const ChevronRight = (p) => <Icon {...p}><path d="m9 18 6-6-6-6"/></Icon>;
+const Check = (p) => <Icon {...p}><path d="M20 6 9 17l-5-5"/></Icon>;
+const X = (p) => <Icon {...p}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></Icon>;
+const Shuffle = (p) => <Icon {...p}><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22"/><path d="m18 2 4 4-4 4"/><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2"/><path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8"/><path d="m18 14 4 4-4 4"/></Icon>;
+const BookOpen = (p) => <Icon {...p}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></Icon>;
+const Layers = (p) => <Icon {...p}><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></Icon>;
+const FileText = (p) => <Icon {...p}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></Icon>;
+const Target = (p) => <Icon {...p}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></Icon>;
+const Trophy = (p) => <Icon {...p}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></Icon>;
+
+const MCQ_BANK = [{"topic": "Foundations", "q": "Industrial hygiene is the science of:", "options": ["Treating injured workers", "Anticipating, recognising, evaluating, controlling workplace hazards", "Manufacturing products", "Cleaning equipment"], "correct": 1, "explain": "AREC = Anticipate, Recognise, Evaluate, Control. The core framework."}, {"topic": "Foundations", "q": "Industrial safety primarily aims to:", "options": ["Maximise output", "Protect employees and assets from harm", "Reduce working hours", "Increase wages"], "correct": 1, "explain": "Safety = protecting workers and assets from accidents and hazards."}, {"topic": "Foundations", "q": "AREC stands for:", "options": ["Air Risk Eval Compliance", "Anticipate, Recognise, Evaluate, Control", "Assess Reduce Eliminate Contain", "Audit Review Examine Correct"], "correct": 1, "explain": "The four-step framework of industrial hygiene."}, {"topic": "Foundations", "q": "Which is NOT a workplace hazard category?", "options": ["Physical", "Chemical", "Financial", "Psychosocial"], "correct": 2, "explain": "Five categories: Physical, Chemical, Biological, Ergonomic, Psychosocial."}, {"topic": "Foundations", "q": "Repetitive strain injury falls under:", "options": ["Chemical hazards", "Biological", "Ergonomic", "Physical"], "correct": 2, "explain": "Ergonomic hazards include repetitive motion, posture, lifting."}, {"topic": "Foundations", "q": "Noise exposure at work is which hazard type?", "options": ["Physical", "Chemical", "Biological", "Psychosocial"], "correct": 0, "explain": "Physical hazards include noise, vibration, heat, radiation."}, {"topic": "Foundations", "q": "Stress and harassment at work fall under:", "options": ["Physical", "Chemical", "Biological", "Psychosocial"], "correct": 3, "explain": "Psychosocial: stress, harassment, shift work, workplace violence."}, {"topic": "Foundations", "q": "Bacteria and viruses in healthcare are which hazard?", "options": ["Physical", "Chemical", "Biological", "Ergonomic"], "correct": 2, "explain": "Biological hazards include bacteria, viruses, fungi, parasites."}, {"topic": "Foundations", "q": "The most effective hazard control method is:", "options": ["PPE", "Administrative controls", "Elimination", "Engineering controls"], "correct": 2, "explain": "Hierarchy: Elimination > Substitution > Engineering > Administrative > PPE."}, {"topic": "Foundations", "q": "PPE is considered the last line of defence because:", "options": ["Expensive", "Depends on worker compliance", "Uncomfortable", "Hard to find"], "correct": 1, "explain": "PPE depends on the worker remembering and using it correctly."}, {"topic": "Foundations", "q": "ESEAP stands for:", "options": ["Eliminate, Substitute, Engineer, Administer, PPE", "Engineer Safety Evaluation Audit Process", "Equipment Standards Energy Air PPE", "Establish Safety Effective Action Plan"], "correct": 0, "explain": "ESEAP = Hierarchy of hazard control from most to least effective."}, {"topic": "Foundations", "q": "Substitution as a hazard control means:", "options": ["Removing hazard entirely", "Replacing with safer alternative", "Using PPE", "Changing schedules"], "correct": 1, "explain": "Substitute toxic chemical with less toxic one, for example."}, {"topic": "Foundations", "q": "Engineering controls include:", "options": ["Training", "Ventilation, machine guards, enclosures", "PPE", "Job rotation"], "correct": 1, "explain": "Engineering: physical barriers between worker and hazard."}, {"topic": "Foundations", "q": "Administrative controls include:", "options": ["Ventilation", "Job rotation, training, signage", "Machine guards", "PPE"], "correct": 1, "explain": "Administrative: change how people work, not the hazard itself."}, {"topic": "Foundations", "q": "Which is NOT an HSE principle?", "options": ["Prevention is better than cure", "Worker participation", "Profit before safety", "Continuous improvement"], "correct": 2, "explain": "Profit before safety contradicts HSE values entirely."}, {"topic": "Fire", "q": "The fire triangle consists of:", "options": ["Fuel, heat, oxygen", "Wood, fire, water", "Heat, smoke, air", "Fuel, water, air"], "correct": 0, "explain": "Three elements needed for fire: fuel, heat, oxygen."}, {"topic": "Fire", "q": "Adding chemical chain reaction creates the:", "options": ["Fire square", "Fire pyramid", "Fire tetrahedron", "Fire box"], "correct": 2, "explain": "Tetrahedron = 4 sides: fuel + heat + oxygen + chain reaction."}, {"topic": "Fire", "q": "Class C fires (electrical) should NEVER use:", "options": ["CO2", "Dry powder", "Water", "Halogenated agents"], "correct": 2, "explain": "Water conducts electricity. Use CO2 or dry powder."}, {"topic": "Fire", "q": "PASS in fire extinguisher:", "options": ["Push Aim Spray Sweep", "Pull, Aim, Squeeze, Sweep", "Pull Apply Spray Stop", "Push Approach Squeeze Stop"], "correct": 1, "explain": "P=Pull pin, A=Aim at base, S=Squeeze, S=Sweep."}, {"topic": "Fire", "q": "Aim a fire extinguisher at:", "options": ["Top of flames", "Base of fire", "Middle of flames", "Smoke"], "correct": 1, "explain": "Aim at fuel source, not the visible flames."}, {"topic": "Fire", "q": "Best extinguisher for cooking oil fires (Class K):", "options": ["Water", "CO2", "Wet chemical", "Dry powder for metals"], "correct": 2, "explain": "Wet chemical for kitchen grease/oil fires."}, {"topic": "Fire", "q": "Smothering removes which fire element?", "options": ["Fuel", "Heat", "Oxygen", "Chemical reaction"], "correct": 2, "explain": "A blanket or foam cuts off oxygen supply."}, {"topic": "Fire", "q": "Cooling with water removes which element?", "options": ["Fuel", "Heat", "Oxygen", "Chain reaction"], "correct": 1, "explain": "Water absorbs heat, lowering temperature below ignition."}, {"topic": "Fire", "q": "Dry powder extinguishers work by:", "options": ["Cooling", "Suffocating", "Disrupting chemical chain reaction", "Cutting fuel"], "correct": 2, "explain": "Powder breaks the combustion chain reaction."}, {"topic": "Fire", "q": "Which is NOT a fire prevention measure?", "options": ["Good housekeeping", "Hot work permits", "Open fuel storage", "Smoking restrictions"], "correct": 2, "explain": "Open fuel storage is a fire HAZARD, not prevention."}, {"topic": "Fire", "q": "Hot work permits are needed for:", "options": ["Office work", "Welding, grinding, cutting", "Computer use", "Reading"], "correct": 1, "explain": "Activities that produce sparks or heat near combustibles."}, {"topic": "Fire", "q": "A fire blanket is most useful for:", "options": ["Class C", "Small Class A or grease fires (smother)", "Large structural fires", "Electrical fires"], "correct": 1, "explain": "Smothers small fires - person on fire or pan fires."}, {"topic": "Fire", "q": "Fire detection in industrial settings includes:", "options": ["Smoke alarms only", "Smoke detectors, heat detectors, sprinklers", "Just sprinklers", "Carbon monoxide alarms"], "correct": 1, "explain": "Multiple detection systems give layered protection."}, {"topic": "Fire", "q": "Fire drills should be:", "options": ["Annual only", "Regular and documented", "One-time", "Unnecessary if alarms work"], "correct": 1, "explain": "Regular drills ensure preparedness."}, {"topic": "Fire", "q": "The 4 Cs of fire extinguishing are:", "options": ["Cooling, Cutting oxygen, Cutting fuel, Chemical interruption", "Combust, Control, Contain, Conclude", "Calm, Call, Carry, Cover", "Check, Confirm, Cease, Conclude"], "correct": 0, "explain": "Cool, cut O2, cut fuel, chemical interruption."}, {"topic": "Chemical", "q": "Most common chemical entry route:", "options": ["Ingestion", "Inhalation", "Skin absorption", "Injection"], "correct": 1, "explain": "Inhalation is the most common in workplace exposure."}, {"topic": "Chemical", "q": "MSDS / SDS provides:", "options": ["Sales receipts", "Hazards, handling, first aid, disposal info", "Manufacturer addresses", "Pricing"], "correct": 1, "explain": "Material/Safety Data Sheet: complete chemical safety profile."}, {"topic": "Chemical", "q": "TLV-TWA averages over:", "options": ["1 hour", "8-hour workday / 40-hour workweek", "24 hours", "1 week"], "correct": 1, "explain": "Time-Weighted Average for typical work shift."}, {"topic": "Chemical", "q": "TLV-STEL is for:", "options": ["8 hours", "15 minutes maximum exposure", "Lifetime exposure", "30 days"], "correct": 1, "explain": "Short-Term Exposure Limit, max 15 minutes."}, {"topic": "Chemical", "q": "TLV-Ceiling means:", "options": ["Average value", "Should never be exceeded, even briefly", "Long-term limit", "Recommended dose"], "correct": 1, "explain": "Absolute maximum at any moment."}, {"topic": "Chemical", "q": "GHS pictograms communicate:", "options": ["Pricing", "Chemical hazards visually", "Manufacturers", "Use instructions"], "correct": 1, "explain": "Globally Harmonised System symbols on labels."}, {"topic": "Chemical", "q": "Acute chemical exposure means:", "options": ["Daily low-dose", "Single high-dose, short-term", "Lifetime", "Mild only"], "correct": 1, "explain": "Acute = sudden, brief, often severe exposure."}, {"topic": "Chemical", "q": "Asbestosis and silicosis are:", "options": ["Acute effects", "Chronic respiratory diseases from long-term exposure", "Skin disorders", "Foodborne"], "correct": 1, "explain": "Long-term low-dose lung diseases from inhaled fibres."}, {"topic": "Chemical", "q": "Eye-wash stations should be within:", "options": ["30 sec", "60 sec", "10 sec", "5 sec"], "correct": 2, "explain": "Within 10 seconds of work areas with chemical exposure."}, {"topic": "Chemical", "q": "Fumes are produced by:", "options": ["Mixing liquids", "Heating metals", "Sweeping floors", "Breathing"], "correct": 1, "explain": "Fumes = very fine particles from heated metals."}, {"topic": "Chemical", "q": "Mists in chemical exposure are:", "options": ["Solid particles", "Liquid droplets from spraying", "Gases", "Vapours"], "correct": 1, "explain": "Mists = liquid droplets aerosolised."}, {"topic": "Chemical", "q": "Vapours differ from gases in that:", "options": ["Vapours are coloured", "Vapours come from substances normally liquid/solid at room temp", "Gases are heavier", "No difference"], "correct": 1, "explain": "Vapour: gaseous form of substance normally not gaseous."}, {"topic": "Chemical", "q": "Dermatitis is a:", "options": ["Lung disease", "Skin disorder", "Liver problem", "Heart issue"], "correct": 1, "explain": "Skin inflammation - common chronic chemical effect."}, {"topic": "Chemical", "q": "Storage of incompatible chemicals should be:", "options": ["Mixed for efficiency", "Segregated", "Stacked tall", "Outdoors"], "correct": 1, "explain": "Segregation prevents dangerous reactions."}, {"topic": "Chemical", "q": "Health surveillance for chemical workers means:", "options": ["Watching them work", "Regular medical examinations", "Counting hours", "Testing competence"], "correct": 1, "explain": "Medical checks to detect early effects of exposure."}, {"topic": "Ergonomics", "q": "Ergonomics is fitting:", "options": ["Workers to job", "Job to worker", "Equipment to building", "Schedule to clock"], "correct": 1, "explain": "Adjust the work to suit human capabilities and limitations."}, {"topic": "Ergonomics", "q": "Carpal tunnel syndrome from:", "options": ["Heavy lifting", "Repetitive wrist motion", "Standing", "Inhaling fumes"], "correct": 1, "explain": "Compression of median nerve from repetitive wrist use."}, {"topic": "Ergonomics", "q": "Which is NOT a type of ergonomics?", "options": ["Physical", "Cognitive", "Organisational", "Geological"], "correct": 3, "explain": "Three types: physical, cognitive, organisational."}, {"topic": "Ergonomics", "q": "Cognitive ergonomics studies:", "options": ["Body posture", "Mental workload, decisions, perception", "Equipment height", "Lighting"], "correct": 1, "explain": "How brain handles work demands."}, {"topic": "Ergonomics", "q": "Organisational ergonomics covers:", "options": ["Posture", "Work systems, communication, teams, shifts", "Tool design", "Lighting"], "correct": 1, "explain": "How systems and teams are designed."}, {"topic": "Ergonomics", "q": "Lifting technique:", "options": ["Bend at waist", "Bend at knees, back straight", "Twist while lifting", "Hold at arm's length"], "correct": 1, "explain": "Use legs, keep back straight, load close to body."}, {"topic": "Ergonomics", "q": "Tennis elbow is medically:", "options": ["Bursitis", "Tendinitis", "Epicondylitis", "Carpal tunnel"], "correct": 2, "explain": "Lateral epicondylitis - elbow tendon inflammation."}, {"topic": "Ergonomics", "q": "Tension neck syndrome from:", "options": ["Heavy lifting", "Static postures, prolonged sitting", "Cold", "Loud noises"], "correct": 1, "explain": "Long static postures cause muscle tension."}, {"topic": "Ergonomics", "q": "MSDs stands for:", "options": ["Mental Stress Disorders", "Musculoskeletal Disorders", "Major Sports Disabilities", "Multiple Symptom Diseases"], "correct": 1, "explain": "Musculoskeletal Disorders - common ergonomic injuries."}, {"topic": "Ergonomics", "q": "Vibration exposure causes:", "options": ["No problems", "Hand-arm vibration syndrome", "Eye damage", "Hearing loss only"], "correct": 1, "explain": "Power tools cause Raynaud-like vibration syndrome."}, {"topic": "Ergonomics", "q": "Repetitive gripping causes:", "options": ["Headache", "Trigger finger", "Foot pain", "Back pain"], "correct": 1, "explain": "Trigger finger from repeated hand gripping."}, {"topic": "Ergonomics", "q": "Bursitis affects:", "options": ["Brain", "Shoulder, knee, elbow joints", "Lungs", "Liver"], "correct": 1, "explain": "Inflammation of bursae from repeated pressure."}, {"topic": "Ergonomics", "q": "Neutral posture means:", "options": ["No twisting, bending, reaching", "Sitting tall", "Lying down", "Standing rigid"], "correct": 0, "explain": "Body alignment that minimises strain."}, {"topic": "Ergonomics", "q": "Pressure points should be:", "options": ["Sharpened", "Minimised - no hard edges digging in", "Padded with metal", "Reinforced"], "correct": 1, "explain": "Avoid hard edges contacting skin/limbs."}, {"topic": "Ergonomics", "q": "During the workday, workers should:", "options": ["Stay still", "Move, exercise, stretch", "Skip breaks", "Drink less water"], "correct": 1, "explain": "Movement and stretching reduce static load."}, {"topic": "WorkersComp", "q": "Workers compensation is a:", "options": ["Fault-based system", "No-fault system", "Voluntary system", "Profit-sharing"], "correct": 1, "explain": "Workers get benefits regardless of who caused injury."}, {"topic": "WorkersComp", "q": "Nigeria's Employees Compensation Act passed in:", "options": ["2000", "2005", "2010", "2015"], "correct": 2, "explain": "Employees' Compensation Act 2010."}, {"topic": "WorkersComp", "q": "Nigerian agency administering workers comp:", "options": ["NAFDAC", "NSITF", "FRSC", "NIMC"], "correct": 1, "explain": "Nigeria Social Insurance Trust Fund."}, {"topic": "WorkersComp", "q": "Nigerian employer contribution to ECF:", "options": ["0.5%", "1%", "2%", "5%"], "correct": 1, "explain": "1% of total monthly payroll."}, {"topic": "WorkersComp", "q": "Mod rate of 1.0 means:", "options": ["Zero accidents", "Average for industry", "Below average", "Worst possible"], "correct": 1, "explain": "1.0 = baseline industry average."}, {"topic": "WorkersComp", "q": "Workers comp benefits include all EXCEPT:", "options": ["Medical treatment", "Wage replacement", "Punitive damages against employer", "Death benefits"], "correct": 2, "explain": "Punitive damages aren't part of no-fault systems."}, {"topic": "WorkersComp", "q": "Mod is calculated over:", "options": ["1 year", "3 consecutive years", "5 years", "10 years"], "correct": 1, "explain": "3 consecutive years of claims data."}, {"topic": "WorkersComp", "q": "Higher mod means:", "options": ["Better safety", "Lower premiums", "Higher insurance premiums", "Bonus for company"], "correct": 2, "explain": "More accidents = higher mod = higher premiums."}, {"topic": "WorkersComp", "q": "Vocational rehabilitation under workers comp is for:", "options": ["Permanent disability", "Workers who can't return to old job - retraining", "Vacation", "Stress relief"], "correct": 1, "explain": "Helps injured workers retrain for new careers."}, {"topic": "WorkersComp", "q": "After workplace injury, first step:", "options": ["Sue the employer", "Provide first aid / medical attention", "Quit job", "Sleep"], "correct": 1, "explain": "Medical care first, then notification, investigation, claim."}, {"topic": "HACCP", "q": "HACCP stands for:", "options": ["Hazard Analysis and Critical Control Point", "Health Assessment and Comprehensive Care Plan", "Hazard Avoidance and Compliance Control Programme", "Hospital Accreditation and Critical Care Plan"], "correct": 0, "explain": "The standard food safety framework."}, {"topic": "HACCP", "q": "HACCP was developed by:", "options": ["WHO", "NASA and Pillsbury in 1960s", "EU", "Codex"], "correct": 1, "explain": "For zero-defect food in early manned space missions."}, {"topic": "HACCP", "q": "HACCP has how many principles?", "options": ["5", "7", "10", "12"], "correct": 1, "explain": "7 internationally agreed principles."}, {"topic": "HACCP", "q": "First principle of HACCP:", "options": ["Determine CCPs", "Conduct hazard analysis", "Establish critical limits", "Documentation"], "correct": 1, "explain": "Hazard analysis comes first."}, {"topic": "HACCP", "q": "A CCP is:", "options": ["Any production step", "Most workers location", "Step where control prevents/eliminates/reduces hazard", "End of production line"], "correct": 2, "explain": "Critical Control Point - where you can intervene."}, {"topic": "HACCP", "q": "Which is NOT an HACCP food hazard type?", "options": ["Biological", "Chemical", "Physical", "Economic"], "correct": 3, "explain": "Three types: biological, chemical, physical."}, {"topic": "HACCP", "q": "Glass or metal in food is which hazard?", "options": ["Biological", "Chemical", "Physical", "Microbial"], "correct": 2, "explain": "Foreign objects are physical hazards."}, {"topic": "HACCP", "q": "Bacteria in food are:", "options": ["Biological hazard", "Chemical", "Physical", "Not a hazard"], "correct": 0, "explain": "Most common food hazard - over 90% of foodborne illness."}, {"topic": "HACCP", "q": "Critical limit is:", "options": ["Number of staff", "Max/min value at CCP separating safe from unsafe", "Production batch size", "Cost limit"], "correct": 1, "explain": "Boundary between acceptable and unacceptable."}, {"topic": "HACCP", "q": "Pre-requisite programmes cover:", "options": ["Marketing", "Plant environment, water, sanitation, training", "Sales", "Customer service"], "correct": 1, "explain": "Foundation conditions for HACCP plans."}, {"topic": "HACCP", "q": "Verification in HACCP means:", "options": ["Tasting product", "Activities confirming HACCP plan works", "Auditing finances", "Customer feedback"], "correct": 1, "explain": "Confirms system effectiveness beyond monitoring."}, {"topic": "HACCP", "q": "Codex Alimentarius is:", "options": ["Food brand", "International food safety standards body", "Cooking show", "Restaurant chain"], "correct": 1, "explain": "FAO/WHO joint food code body."}, {"topic": "HACCP", "q": "HACCP team should include:", "options": ["Just managers", "Multi-disciplinary (production, sanitation, QA, lab, engineering)", "Marketing only", "Only HACCP-trained people"], "correct": 1, "explain": "Cross-functional team for thorough analysis."}, {"topic": "HACCP", "q": "Process flow diagram is:", "options": ["Optional", "Constructed by HACCP team covering all operation steps", "For finance", "Customer-facing"], "correct": 1, "explain": "Maps every step from raw material to finished product."}, {"topic": "HACCP", "q": "Monitoring at CCP should be:", "options": ["Annual", "Frequent enough to ensure effective control", "Once per batch", "Optional"], "correct": 1, "explain": "Frequency must catch deviations in time."}, {"topic": "HACCP", "q": "Corrective action is taken when:", "options": ["Schedule changes", "CCP loses control", "Product launches", "Employee leaves"], "correct": 1, "explain": "When monitoring shows deviation from critical limits."}, {"topic": "HACCP", "q": "HACCP documentation includes:", "options": ["Marketing plans", "Hazard analysis, CCP/CL determination, monitoring records, deviations", "Tax returns", "Customer complaints"], "correct": 1, "explain": "Full record of HACCP plan and operation."}, {"topic": "HACCP", "q": "HACCP Principle 7 is:", "options": ["Hazard analysis", "Determine CCPs", "Verification", "Documentation"], "correct": 3, "explain": "7th = establish documentation procedures."}, {"topic": "HACCP", "q": "HACCP can be applied to:", "options": ["Only large factories", "Only small businesses", "Any food business, any size", "Only restaurants"], "correct": 2, "explain": "Universally applicable across food chain."}, {"topic": "HACCP", "q": "Why HACCP overcomes traditional approaches:", "options": ["Cheaper", "Proactive vs reactive snap-shot inspection", "Government mandate", "Faster"], "correct": 1, "explain": "Continuous prevention beats periodic inspection."}, {"topic": "HSE", "q": "ISO 45001 is for:", "options": ["Quality management", "Environmental management", "Occupational health and safety", "Information security"], "correct": 2, "explain": "OH&S Management Systems standard."}, {"topic": "HSE", "q": "ISO 14001 is for:", "options": ["Quality", "Environmental Management", "OH&S", "IT security"], "correct": 1, "explain": "Environmental Management Systems."}, {"topic": "HSE", "q": "PDCA cycle:", "options": ["Plan, Do, Check, Act", "Prevent, Detect, Correct, Audit", "Policy, Design, Compliance, Action", "Plan, Develop, Control, Approve"], "correct": 0, "explain": "Continuous improvement cycle."}, {"topic": "HSE", "q": "Risk formula:", "options": ["Risk = Hazard + Probability", "Risk = Severity x Likelihood", "Risk = Cost / Benefit", "Risk = Time x Exposure"], "correct": 1, "explain": "Severity multiplied by likelihood."}, {"topic": "HSE", "q": "Dynamic risk assessment is:", "options": ["Computer-based", "Real-time when hazard or accident is identified", "Annual review", "Pre-employment check"], "correct": 1, "explain": "Used by emergency responders, on-the-spot."}, {"topic": "HSE", "q": "Most common workplace checklist type:", "options": ["Quantitative", "Qualitative", "Generic", "Site-specific"], "correct": 1, "explain": "Take 5 Safety Checklist style - rate hazards on matrix."}, {"topic": "HSE", "q": "Take 5 Safety Checklist is:", "options": ["Quantitative", "Qualitative", "Generic", "Dynamic"], "correct": 1, "explain": "Workers identify and rate hazards qualitatively."}, {"topic": "HSE", "q": "Five risk assessment checklist types:", "options": ["Yes No Maybe", "Qualitative, Quantitative, Generic, Site-specific, Dynamic", "High Med Low", "Annual Quarter Monthly Daily Hourly"], "correct": 1, "explain": "The 5 standard categories."}, {"topic": "HSE", "q": "Risk assessment 5 steps include:", "options": ["Recruit, retain, retrain, replace", "Identify hazards, who might be harmed, evaluate, record, review", "Buy, sell, transfer", "Apply, audit, accept"], "correct": 1, "explain": "Standard HSE risk assessment workflow."}, {"topic": "HSE", "q": "HSE Policy should come from:", "options": ["Workers only", "Top management as written commitment", "Government", "Customers"], "correct": 1, "explain": "Senior leadership signs off on the HSE policy."}];
+const FLASHCARDS = [{"term": "Industrial Hygiene", "def": "Science and art of anticipating, recognising, evaluating, controlling environmental factors and stresses arising in workplace that may cause sickness or discomfort."}, {"term": "Industrial Safety", "def": "Management of all operations and events within an industry to protect employees and assets by minimising hazards, risks, and accidents."}, {"term": "AREC", "def": "Anticipate, Recognise, Evaluate, Control. The four-step framework of industrial hygiene."}, {"term": "Five Hazard Categories", "def": "Physical, Chemical, Biological, Ergonomic, Psychosocial."}, {"term": "Physical Hazards", "def": "Noise, vibration, heat, cold, radiation, pressure, lighting."}, {"term": "Chemical Hazards", "def": "Dusts, fumes, mists, vapours, gases, liquids, solvents."}, {"term": "Biological Hazards", "def": "Bacteria, viruses, fungi, parasites, animal handling."}, {"term": "Ergonomic Hazards", "def": "Repetitive motion, poor posture, heavy lifting, awkward positions."}, {"term": "Psychosocial Hazards", "def": "Stress, harassment, shift work, workload, workplace violence."}, {"term": "Hierarchy of Control (ESEAP)", "def": "Elimination, Substitution, Engineering, Administrative, PPE - most to least effective."}, {"term": "Elimination", "def": "Remove the hazard entirely. Most effective control."}, {"term": "Substitution", "def": "Replace with safer alternative."}, {"term": "Engineering Controls", "def": "Isolate hazard with ventilation, machine guards, enclosures."}, {"term": "Administrative Controls", "def": "Change how people work - rotations, training, signage, schedules."}, {"term": "PPE", "def": "Personal Protective Equipment. Last line of defence: helmets, gloves, masks."}, {"term": "Fire Triangle", "def": "Fuel, Heat, Oxygen. Remove any to extinguish fire."}, {"term": "Fire Tetrahedron", "def": "Triangle + chemical chain reaction. The full combustion concept."}, {"term": "PASS Technique", "def": "Pull pin, Aim at base, Squeeze handle, Sweep side to side."}, {"term": "Class A Fire", "def": "Wood, paper, cloth, combustible solids."}, {"term": "Class B Fire", "def": "Liquids and gases (propane, petrol)."}, {"term": "Class C Fire", "def": "Electrical equipment. NEVER use water."}, {"term": "Class D Fire", "def": "Burning metals (less common)."}, {"term": "Class K Fire", "def": "Cooking oils and fats. Use wet chemical."}, {"term": "4 Cs of Fire Extinguishing", "def": "Cooling, Cutting oxygen, Cutting fuel, Chemical interruption."}, {"term": "Routes of Chemical Entry", "def": "Inhalation (most common), Ingestion, Skin absorption, Injection."}, {"term": "SDS / MSDS", "def": "Safety/Material Safety Data Sheet. Lists hazards, handling, first aid, disposal."}, {"term": "TLV-TWA", "def": "Time-Weighted Average exposure limit for 8-hour workday, 40-hour week."}, {"term": "TLV-STEL", "def": "Short-Term Exposure Limit. Maximum 15 minutes."}, {"term": "TLV-Ceiling", "def": "Must never be exceeded, even briefly."}, {"term": "GHS", "def": "Globally Harmonised System. Standard chemical hazard pictograms worldwide."}, {"term": "Acute Exposure", "def": "Single high-dose, short-term exposure. Often severe."}, {"term": "Chronic Exposure", "def": "Long-term repeated low-dose exposure. Cancer, organ damage."}, {"term": "Asbestosis / Silicosis", "def": "Chronic lung diseases from inhaling asbestos or silica fibres."}, {"term": "Ergonomics", "def": "Science of fitting the job to the worker, not the other way around."}, {"term": "MSDs", "def": "Musculoskeletal Disorders. Carpal tunnel, tendinitis, back pain, epicondylitis."}, {"term": "Carpal Tunnel Syndrome", "def": "Median nerve compression at wrist from repetitive motion."}, {"term": "Tennis Elbow", "def": "Lateral epicondylitis. Elbow tendon inflammation from repetitive arm motion."}, {"term": "Workers Compensation", "def": "Government-mandated no-fault insurance providing wage replacement and medical benefits for work injuries."}, {"term": "NSITF", "def": "Nigeria Social Insurance Trust Fund. Administers Employees Compensation Act 2010."}, {"term": "Mod Rate", "def": "Experience modification. Compares company accident rate to industry over 3 years. Affects insurance premiums."}, {"term": "HACCP", "def": "Hazard Analysis and Critical Control Point. International food safety management system."}, {"term": "HACCP History", "def": "Developed in 1960s by NASA and Pillsbury for zero-defect food in space missions."}, {"term": "7 HACCP Principles", "def": "Hazard analysis, CCPs, Critical limits, Monitoring, Corrective actions, Verification, Documentation."}, {"term": "CCP", "def": "Critical Control Point - step where control can prevent, eliminate, or reduce a hazard."}, {"term": "Critical Limit", "def": "Max/min value at CCP separating safe from unsafe food."}, {"term": "3 Food Hazards (HACCP)", "def": "Biological (most common), Chemical, Physical."}, {"term": "Pre-requisite Programmes", "def": "Foundation conditions before HACCP: water quality, sanitation, training, pest control."}, {"term": "ISO 45001", "def": "International standard for Occupational Health and Safety Management Systems."}, {"term": "PDCA Cycle", "def": "Plan, Do, Check, Act. Continuous improvement loop in HSE management."}, {"term": "Risk Formula", "def": "Risk = Severity x Likelihood. Both scored 1-5 typically."}];
+const ESSAYS = [{"title": "Define industrial hygiene and discuss its objectives", "points": ["Definition (AIHA): science of anticipating, recognising, evaluating, controlling workplace hazards", "AREC framework", "Objectives: protect health, prevent accidents, productivity, compliance, financial loss reduction, wellbeing, environment, training", "Importance for sustainable industrial growth"]}, {"title": "Discuss the five categories of workplace hazards with examples", "points": ["Physical: noise, vibration, heat, radiation", "Chemical: dusts, fumes, vapours, gases, solvents", "Biological: bacteria, viruses, fungi, parasites", "Ergonomic: repetitive motion, posture, lifting", "Psychosocial: stress, harassment, shift work", "Why categorisation matters for control selection"]}, {"title": "Explain the hierarchy of hazard control with examples", "points": ["Why hierarchy exists - most effective first", "Elimination (remove source)", "Substitution (safer alternative)", "Engineering controls (ventilation, guards)", "Administrative controls (training, rotations)", "PPE (last line of defence)", "ESEAP mnemonic", "Why PPE comes last - depends on compliance"]}, {"title": "Discuss fire safety in an industrial setting", "points": ["Fire triangle/tetrahedron: fuel, heat, oxygen, chain reaction", "Five fire classes: A, B, C, D, K", "4 Cs of extinguishing: cool, cut O2, cut fuel, chemical interruption", "Prevention: housekeeping, storage, electrical maintenance, hot work permits, drills", "PASS technique", "Equipment checklist: alarms, sprinklers, extinguishers, exit signs"]}, {"title": "Explain chemical safety in the workplace", "points": ["Forms: dusts, fumes, mists, vapours, gases, liquids", "Routes: inhalation (most common), ingestion, skin, injection", "Acute vs chronic effects", "TLV-TWA, STEL, Ceiling", "Control measures: SDS, GHS labels, engineering, PPE, storage, training, surveillance", "Eye-wash stations within 10 sec"]}, {"title": "Discuss ergonomics and common workplace injuries", "points": ["Definition: fitting job to worker", "Three types: physical, cognitive, organisational", "Common hazards: repetition, posture, lifting, static, vibration", "MSDs: carpal tunnel, tendinitis, back pain, epicondylitis", "Principles of ergonomic design (10)", "Safe lifting rules"]}, {"title": "Discuss workers compensation in Nigeria", "points": ["Definition: no-fault insurance for work injury", "Employees Compensation Act 2010", "NSITF as administrator", "Employer contribution: 1% monthly payroll", "Benefits: medical, temporary disability, permanent partial/total, death, funeral, rehabilitation", "Mod rate explained", "Reporting process"]}, {"title": "Explain the seven principles of HACCP", "points": ["HACCP history: NASA/Pillsbury, 1960s", "7 principles in order", "Definitions: hazard, CCP, critical limit, control measure", "Preliminary steps", "Two-element system: prerequisites + HACCP plans", "Benefits and global adoption"]}, {"title": "Discuss types of food hazards relevant to HACCP", "points": ["Three types: biological, chemical, physical", "Biological (most common): bacteria, viruses, parasites, mould, microbial toxins", "Chemical: cleaning agents, pesticides, allergens, plant toxins", "Physical: glass, metal, stones, plastic, bones", "Examples and prevention for each"]}, {"title": "Discuss the importance and types of safety assessment checklists", "points": ["Definition and purpose", "Why important: proactive, safety culture, legal compliance, documentation, accident reduction", "Five types: qualitative, quantitative, generic, site-specific, dynamic", "Hazard assessment workflow (5 steps)", "Risk = Severity x Likelihood", "Specific example: classroom safety checklist"]}, {"title": "Compare and contrast HACCP plan and prerequisite programmes", "points": ["Both elements of HACCP system", "Prerequisite Programmes: implemented BEFORE HACCP plans", "Cover overall plant environment: water quality, transport, storage, sanitation, training, pest control", "HACCP plans: implemented AFTER PRPs", "Tailored to specific product/process", "Address product-specific hazards through 7 principles", "Both essential together"]}, {"title": "Discuss the principles of Health Safety and Environment (HSE)", "points": ["Integration of three concerns: health, safety, environment", "Seven principles: prevention better than cure, worker participation, continuous improvement, integration, compliance, accountability, documentation", "Why integrated approach: problems in one area cause others", "Application across industries"]}, {"title": "Discuss the structural organisation of an industrial HSE department", "points": ["Top management/CEO at head", "HSE Manager/Director", "Industrial Hygienists for chemical/physical/biological hazards", "Safety Officers/Engineers for accident prevention", "Occupational Health Nurse/Doctor for surveillance", "Environmental Officer for waste/emissions", "Department Safety Reps", "Joint Health and Safety Committee (workers + management)"]}, {"title": "Discuss the role of OSHA in occupational safety", "points": ["Definition: Occupational Safety and Health Administration (US)", "Three goals: improve safety, change culture, secure public confidence", "Standards setting", "Inspection and enforcement", "Education and training", "Whistleblower protection", "Application to industries"]}, {"title": "Discuss the role of a safety manager in industry", "points": ["Direct access to top management", "Access to every department", "Prepares regular status reports", "Advisory role - implementation by upper management + teams", "Establishes accident/safety reporting system", "Documentation and record keeping", "Coordinates training", "Investigates incidents"]}, {"title": "Explain workplace violence prevention", "points": ["Zero-tolerance policy", "Address bullying, harassment, defiance, gossiping early", "Examine security, hiring, performance appraisal policies", "Training in de-escalation", "Reporting mechanisms", "Support for victims", "Mental health resources", "Incentives for safe behaviour"]}, {"title": "Discuss ISO 45001 and its components", "points": ["Definition: international OH&S management standard (replaced OHSAS 18001 in 2018)", "Aim: reduce work-related injury, ill health, deaths", "Components: HSE policy, planning, implementation, operation, performance evaluation, improvement", "Plan-Do-Check-Act cycle", "Worker participation", "Risk-based thinking", "Continual improvement"]}, {"title": "Explain the PDCA cycle in HSE management", "points": ["Plan: identify hazards, assess risks, set objectives, plan controls", "Do: implement plan, train workers, run controls", "Check: measure performance, audit, investigate incidents", "Act: correct, adjust, improve, plan again", "Continuous loop", "Risk-based thinking integrated", "Application to all HSE activities"]}, {"title": "Discuss the 5 steps of risk assessment", "points": ["1. Identify the hazards", "2. Identify who might be harmed and how", "3. Evaluate risks and decide on precautions", "4. Record findings and implement", "5. Review and update", "Risk = Severity x Likelihood", "Both scored 1-5", "Highest scores tackled first"]}, {"title": "Discuss the use and effectiveness of personal protective equipment (PPE)", "points": ["Definition: equipment worn to minimise exposure to hazards", "Types: helmets, safety glasses, hearing protection, respirators, gloves, aprons, boots", "Why last in hierarchy: depends on compliance", "Selection criteria: hazard type, severity, duration", "Training: proper use and limitations", "Maintenance and replacement", "Don't substitute for higher controls"]}, {"title": "Discuss the application of HACCP in food industry", "points": ["Universal application from primary production to retail", "Adapted to specific products/processes", "Preliminary steps: team, product description, intended use, flow diagram", "Apply 7 principles", "Documentation maintained", "Verification by audit", "Training all staff", "Government oversight in Nigeria via NAFDAC"]}, {"title": "Discuss the seven HACCP principles in food safety", "points": ["1. Conduct hazard analysis", "2. Determine CCPs", "3. Establish critical limits", "4. Monitor CCPs", "5. Establish corrective actions", "6. Verification procedures", "7. Documentation", "Each described with example", "How they work together"]}, {"title": "Explain the methods of fire prevention in industries", "points": ["Good housekeeping (no clutter, oily rags removed)", "Proper flammable storage (cool, ventilated, segregated)", "Regular electrical maintenance", "Smoking restrictions", "Hot work permits for welding/grinding", "Fire detection systems", "Functional extinguishers (matched to class)", "Sprinkler systems", "Marked exits and assembly points", "Regular drills", "Worker training (PASS)"]}, {"title": "Discuss the health effects of chronic chemical exposure", "points": ["Cancer (carcinogens like benzene)", "Organ damage (liver, kidney, lung)", "Reproductive problems", "Respiratory diseases (asbestosis, silicosis)", "Skin disorders (dermatitis)", "Nervous system damage (lead, mercury)", "Hematological effects", "Long latency makes detection difficult", "Importance of medical surveillance"]}, {"title": "Discuss the importance of documentation in HSE", "points": ["Required by ISO 45001 and ISO 14001", "HACCP Principle 7", "Documents: HSE policy, hazard analysis, CCP records, monitoring records, deviations, corrective actions, training, audits", "Provides legal protection", "Enables traceability", "Supports continuous improvement", "Required for inspections", "Record retention periods"]}];
+const QUICK_REFERENCE = [{"category": "Mnemonics", "items": [{"label": "AREC", "desc": "Anticipate, Recognise, Evaluate, Control"}, {"label": "ESEAP", "desc": "Eliminate, Substitute, Engineer, Administer, PPE"}, {"label": "PASS", "desc": "Pull, Aim, Squeeze, Sweep (extinguisher)"}, {"label": "PDCA", "desc": "Plan, Do, Check, Act"}, {"label": "4 Cs", "desc": "Cooling, Cut O2, Cut fuel, Chemical interruption"}, {"label": "5 Hazards", "desc": "Physical, Chemical, Biological, Ergonomic, Psychosocial"}]}, {"category": "Critical Numbers", "items": [{"label": "1%", "desc": "NSITF employer contribution (Nigeria)"}, {"label": "3 years", "desc": "Workers Comp Mod calculation period"}, {"label": "7", "desc": "HACCP principles"}, {"label": "5", "desc": "Workplace hazard categories"}, {"label": "5", "desc": "Risk assessment steps"}, {"label": "5", "desc": "Safety checklist types"}, {"label": "10 sec", "desc": "Eye wash station distance"}, {"label": "15 min", "desc": "TLV-STEL maximum"}, {"label": "8 hr", "desc": "TLV-TWA averaging period"}, {"label": "1960s", "desc": "HACCP developed by NASA/Pillsbury"}]}, {"category": "Fire Classes", "items": [{"label": "A", "desc": "Paper, wood, cloth, solids"}, {"label": "B", "desc": "Liquids, gases (propane, petrol)"}, {"label": "C", "desc": "Electrical (no water!)"}, {"label": "D", "desc": "Burning metals"}, {"label": "K", "desc": "Kitchen (grease, oil) - wet chemical"}]}, {"category": "HACCP 7 Principles", "items": [{"label": "1", "desc": "Hazard Analysis"}, {"label": "2", "desc": "Critical Control Points"}, {"label": "3", "desc": "Critical Limits"}, {"label": "4", "desc": "Monitor CCPs"}, {"label": "5", "desc": "Corrective Actions"}, {"label": "6", "desc": "Verification"}, {"label": "7", "desc": "Documentation"}]}, {"category": "Hierarchy of Control", "items": [{"label": "1", "desc": "Elimination (most effective)"}, {"label": "2", "desc": "Substitution"}, {"label": "3", "desc": "Engineering controls"}, {"label": "4", "desc": "Administrative controls"}, {"label": "5", "desc": "PPE (least effective)"}]}];
+
+function App() {
+  const [mode, setMode] = useState('home');
+  const [topicFilter, setTopicFilter] = useState('All');
+  const [questionIndex, setQuestionIndex] = useState(0);
+  const [selected, setSelected] = useState(null);
+  const [revealed, setRevealed] = useState(false);
+  const [score, setScore] = useState({ correct: 0, total: 0 });
+  const [shuffled, setShuffled] = useState(false);
+  const [questionOrder, setQuestionOrder] = useState([]);
+  const [flashIndex, setFlashIndex] = useState(0);
+  const [flashFlipped, setFlashFlipped] = useState(false);
+  const [flashOrder, setFlashOrder] = useState([]);
+  const [essayIndex, setEssayIndex] = useState(0);
+  const [revealedEssay, setRevealedEssay] = useState(false);
+
+  const topics = ['All', ...new Set(MCQ_BANK.map(q => q.topic))];
+
+  const filteredQuestions = useMemo(() => {
+    if (topicFilter === 'All') return MCQ_BANK;
+    return MCQ_BANK.filter(q => q.topic === topicFilter);
+  }, [topicFilter]);
+
+  useEffect(() => {
+    const order = filteredQuestions.map((_, i) => i);
+    if (shuffled) {
+      for (let i = order.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [order[i], order[j]] = [order[j], order[i]];
+      }
+    }
+    setQuestionOrder(order);
+    setQuestionIndex(0);
+    setSelected(null);
+    setRevealed(false);
+    setScore({ correct: 0, total: 0 });
+  }, [topicFilter, shuffled, filteredQuestions]);
+
+  useEffect(() => { setFlashOrder(FLASHCARDS.map((_, i) => i)); }, []);
+
+  const currentQ = filteredQuestions[questionOrder[questionIndex]];
+
+  const handleAnswer = (idx) => {
+    if (revealed) return;
+    setSelected(idx);
+    setRevealed(true);
+    setScore(s => ({ correct: s.correct + (idx === currentQ.correct ? 1 : 0), total: s.total + 1 }));
+  };
+
+  const nextQuestion = () => {
+    if (questionIndex < questionOrder.length - 1) {
+      setQuestionIndex(i => i + 1);
+      setSelected(null);
+      setRevealed(false);
+    }
+  };
+
+  const prevQuestion = () => {
+    if (questionIndex > 0) {
+      setQuestionIndex(i => i - 1);
+      setSelected(null);
+      setRevealed(false);
+    }
+  };
+
+  const restart = () => {
+    setQuestionIndex(0);
+    setSelected(null);
+    setRevealed(false);
+    setScore({ correct: 0, total: 0 });
+  };
+
+  const shuffleFlash = () => {
+    const order = [...flashOrder];
+    for (let i = order.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+    setFlashOrder(order);
+    setFlashIndex(0);
+    setFlashFlipped(false);
+  };
+
+  const currentFlash = FLASHCARDS[flashOrder[flashIndex]];
+  const currentEssay = ESSAYS[essayIndex];
+
+  return (
+    <div className="min-h-screen text-stone-100" style={{ background: 'radial-gradient(ellipse at top, #2a1f17 0%, #1a1410 50%, #0f0c0a 100%)', fontFamily: '"Plus Jakarta Sans", -apple-system, sans-serif' }}>
+      <div className="grain-overlay">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10 relative" style={{ zIndex: 2 }}>
+
+          <header className="mb-8 sm:mb-12 fade-in">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="h-px w-8 bg-amber-600/60"></div>
+              <span className="text-xs uppercase tracking-[0.3em] text-amber-500/80">EHS 513 · Day 2</span>
+            </div>
+            <h1 className="display-font text-4xl sm:text-6xl font-medium leading-[0.95] mb-3" style={{ color: '#f5e8d0' }}>
+              Industrial Hygiene<br/>
+              <span className="italic" style={{ color: '#d4a574' }}>and Safety</span>
+            </h1>
+            <p className="text-stone-400 text-sm sm:text-base max-w-xl">Your study companion. AREC framework drives everything. Master the hierarchy of control and HACCP.</p>
+          </header>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-6 sm:mb-8">
+            {[
+              { id: 'home', label: 'Quiz', icon: Target, desc: MCQ_BANK.length + ' MCQs' },
+              { id: 'flash', label: 'Flashcards', icon: Layers, desc: FLASHCARDS.length + ' cards' },
+              { id: 'essay', label: 'Essays', icon: FileText, desc: ESSAYS.length + ' outlines' },
+              { id: 'quick', label: 'Quick Ref', icon: BookOpen, desc: 'Drill cards' }
+            ].map(m => {
+              const I = m.icon;
+              const active = mode === m.id;
+              return (
+                <button key={m.id} onClick={() => setMode(m.id)} className={`group relative p-3 sm:p-4 rounded-lg border transition-all text-left ${active ? 'border-amber-500/60 bg-amber-950/30' : 'border-stone-800 hover:border-stone-700 bg-stone-950/40'}`}>
+                  <I size={18} className={active ? 'text-amber-400' : 'text-stone-400'} />
+                  <div className={`mt-2 text-sm font-medium ${active ? 'text-amber-100' : 'text-stone-200'}`}>{m.label}</div>
+                  <div className="text-[10px] sm:text-xs text-stone-500 mt-0.5">{m.desc}</div>
+                </button>
+              );
+            })}
+          </div>
+
+          {mode === 'home' && currentQ && (
+            <div className="fade-in">
+              <div className="bg-stone-950/60 border border-stone-800 rounded-lg p-4 mb-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="text-xs text-stone-500 uppercase tracking-wider">Question</div>
+                    <div className="display-font text-2xl text-amber-400">{questionIndex + 1}<span className="text-stone-600">/{questionOrder.length}</span></div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <div className="text-xs text-stone-500 uppercase tracking-wider">Score</div>
+                      <div className="display-font text-2xl">
+                        <span style={{ color: score.total > 0 && score.correct/score.total >= 0.7 ? '#86efac' : '#d4a574' }}>{score.correct}</span>
+                        <span className="text-stone-600">/{score.total}</span>
+                      </div>
+                    </div>
+                    <button onClick={restart} className="p-2 hover:bg-stone-800 rounded transition-colors" title="Restart"><RotateCcw size={16} className="text-stone-400" /></button>
+                    <button onClick={() => setShuffled(s => !s)} className={`p-2 rounded transition-colors ${shuffled ? 'bg-amber-950 text-amber-400' : 'hover:bg-stone-800 text-stone-400'}`} title="Shuffle"><Shuffle size={16} /></button>
+                  </div>
+                </div>
+                <div className="h-1 bg-stone-900 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-amber-700 to-amber-500 transition-all duration-500" style={{ width: `${((questionIndex + 1) / questionOrder.length) * 100}%` }}></div>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-1.5">
+                  {topics.map(t => (
+                    <button key={t} onClick={() => setTopicFilter(t)} className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${topicFilter === t ? 'border-amber-600 bg-amber-950/50 text-amber-200' : 'border-stone-800 text-stone-400 hover:border-stone-700'}`}>{t}</button>
+                  ))}
+                </div>
+              </div>
+
+              <div key={questionIndex} className="bg-stone-950/60 border border-stone-800 rounded-lg p-5 sm:p-7 scale-in">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.2em] text-amber-500/80 px-2 py-1 rounded-full bg-amber-950/30 border border-amber-900/40">
+                    <Activity size={14} />
+                    {currentQ.topic}
+                  </span>
+                </div>
+                <h2 className="display-font text-xl sm:text-2xl text-stone-100 leading-snug mb-6">{currentQ.q}</h2>
+                <div className="space-y-2">
+                  {currentQ.options.map((opt, i) => {
+                    const isCorrect = i === currentQ.correct;
+                    const isSelected = selected === i;
+                    let cls = 'border-stone-800 hover:border-stone-700 bg-stone-900/30';
+                    if (revealed) {
+                      if (isCorrect) cls = 'border-emerald-700 bg-emerald-950/40 text-emerald-100';
+                      else if (isSelected && !isCorrect) cls = 'border-rose-800 bg-rose-950/40 text-rose-200';
+                      else cls = 'border-stone-800 bg-stone-950/30 opacity-50';
+                    }
+                    return (
+                      <button key={i} onClick={() => handleAnswer(i)} disabled={revealed} className={`w-full text-left p-3 sm:p-4 rounded-lg border transition-all flex items-start gap-3 ${cls}`}>
+                        <div className={`flex-shrink-0 w-7 h-7 rounded-full border flex items-center justify-center text-xs font-medium ${revealed && isCorrect ? 'border-emerald-600 bg-emerald-900 text-emerald-200' : revealed && isSelected && !isCorrect ? 'border-rose-700 bg-rose-900 text-rose-200' : 'border-stone-700 text-stone-400'}`}>
+                          {revealed && isCorrect ? <Check size={14} /> : revealed && isSelected && !isCorrect ? <X size={14} /> : ['A','B','C','D'][i]}
+                        </div>
+                        <span className="text-sm sm:text-base pt-0.5">{opt}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {revealed && (
+                  <div className="mt-5 p-4 bg-amber-950/20 border-l-2 border-amber-600/60 rounded-r-lg slide-right">
+                    <div className="text-xs uppercase tracking-wider text-amber-500/80 mb-1">Why</div>
+                    <p className="text-sm text-stone-300 leading-relaxed">{currentQ.explain}</p>
+                  </div>
+                )}
+                <div className="flex justify-between items-center mt-6">
+                  <button onClick={prevQuestion} disabled={questionIndex === 0} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                    <ChevronLeft size={16} /> Previous
+                  </button>
+                  {questionIndex === questionOrder.length - 1 && revealed ? (
+                    <div className="flex items-center gap-2 text-amber-400 text-sm">
+                      <Trophy size={16} />
+                      Final score: {score.correct}/{score.total}
+                    </div>
+                  ) : (
+                    <button onClick={nextQuestion} disabled={!revealed || questionIndex === questionOrder.length - 1} className="flex items-center gap-1.5 px-4 py-2 bg-amber-700 hover:bg-amber-600 disabled:opacity-30 disabled:cursor-not-allowed text-stone-50 rounded-md text-sm font-medium transition-colors">
+                      Next <ChevronRight size={16} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {mode === 'flash' && (
+            <div className="fade-in">
+              <div className="bg-stone-950/60 border border-stone-800 rounded-lg p-4 mb-4 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="text-xs text-stone-500 uppercase tracking-wider">Card</div>
+                  <div className="display-font text-2xl text-amber-400">{flashIndex + 1}<span className="text-stone-600">/{FLASHCARDS.length}</span></div>
+                </div>
+                <button onClick={shuffleFlash} className="flex items-center gap-1.5 px-3 py-2 text-stone-300 hover:text-amber-400 border border-stone-800 hover:border-amber-700 rounded-md text-sm transition-colors">
+                  <Shuffle size={14} /> Shuffle
+                </button>
+              </div>
+              <div key={flashIndex} onClick={() => setFlashFlipped(f => !f)} className="bg-gradient-to-br from-stone-900 to-stone-950 border border-stone-800 rounded-lg p-7 sm:p-12 min-h-[280px] sm:min-h-[340px] flex items-center justify-center cursor-pointer hover:border-amber-700/60 transition-colors scale-in">
+                <div className="text-center max-w-2xl">
+                  {!flashFlipped ? (
+                    <>
+                      <div className="text-xs uppercase tracking-[0.3em] text-amber-500/70 mb-4">Term</div>
+                      <h2 className="display-font text-3xl sm:text-4xl font-medium text-stone-100 mb-4">{currentFlash.term}</h2>
+                      <p className="text-xs text-stone-500 mt-6 italic">tap to reveal</p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-xs uppercase tracking-[0.3em] text-amber-500/70 mb-4">Definition</div>
+                      <p className="text-base sm:text-lg text-stone-200 leading-relaxed">{currentFlash.def}</p>
+                      <p className="text-xs text-stone-500 mt-6 italic">tap to flip back</p>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-between items-center mt-4">
+                <button onClick={() => { setFlashIndex(i => Math.max(0, i-1)); setFlashFlipped(false); }} disabled={flashIndex === 0} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  <ChevronLeft size={16} /> Previous
+                </button>
+                <div className="flex-1 mx-4 h-1 bg-stone-900 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-amber-700 to-amber-500" style={{ width: `${((flashIndex + 1) / FLASHCARDS.length) * 100}%` }}></div>
+                </div>
+                <button onClick={() => { setFlashIndex(i => Math.min(FLASHCARDS.length-1, i+1)); setFlashFlipped(false); }} disabled={flashIndex === FLASHCARDS.length-1} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  Next <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {mode === 'essay' && currentEssay && (
+            <div className="fade-in">
+              <div className="bg-stone-950/60 border border-stone-800 rounded-lg p-4 mb-4 flex items-center justify-between">
+                <div>
+                  <div className="text-xs text-stone-500 uppercase tracking-wider">Essay</div>
+                  <div className="display-font text-2xl text-amber-400">{essayIndex + 1}<span className="text-stone-600">/{ESSAYS.length}</span></div>
+                </div>
+                <button onClick={() => setRevealedEssay(r => !r)} className="text-xs px-3 py-1.5 border border-stone-800 hover:border-amber-700 rounded-md text-stone-300 hover:text-amber-400 transition-colors">
+                  {revealedEssay ? 'Hide outline' : 'Reveal outline'}
+                </button>
+              </div>
+              <div key={essayIndex} className="bg-stone-950/60 border border-stone-800 rounded-lg p-6 sm:p-8 scale-in">
+                <h2 className="display-font text-xl sm:text-2xl text-stone-100 leading-snug mb-6 italic">{currentEssay.title}</h2>
+                {revealedEssay ? (
+                  <div className="space-y-3 slide-right">
+                    <div className="text-xs uppercase tracking-wider text-amber-500/80 mb-2">Skeleton outline</div>
+                    {currentEssay.points.map((pt, i) => (
+                      <div key={i} className="flex gap-3 items-start">
+                        <div className="flex-shrink-0 w-6 h-6 rounded-full border border-amber-700/50 text-amber-400 text-xs flex items-center justify-center mt-0.5">{i+1}</div>
+                        <p className="text-sm text-stone-300 leading-relaxed pt-0.5">{pt}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6">
+                    <p className="text-stone-500 italic mb-1">Try drafting your own outline first.</p>
+                    <p className="text-stone-600 text-sm">Then reveal to compare.</p>
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-between items-center mt-4">
+                <button onClick={() => { setEssayIndex(i => Math.max(0, i-1)); setRevealedEssay(false); }} disabled={essayIndex === 0} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  <ChevronLeft size={16} /> Previous
+                </button>
+                <button onClick={() => { setEssayIndex(i => Math.min(ESSAYS.length-1, i+1)); setRevealedEssay(false); }} disabled={essayIndex === ESSAYS.length-1} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  Next <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {mode === 'quick' && (
+            <div className="fade-in space-y-6">
+              {QUICK_REFERENCE.map(section => (
+                <div key={section.category} className="bg-stone-950/60 border border-stone-800 rounded-lg p-5 sm:p-7">
+                  <div className="flex items-center gap-2 mb-5">
+                    <div className="h-px flex-1 bg-stone-800"></div>
+                    <h3 className="display-font text-lg italic text-amber-400 px-3">{section.category}</h3>
+                    <div className="h-px flex-1 bg-stone-800"></div>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-2 sm:gap-3">
+                    {section.items.map((item, i) => (
+                      <div key={i} className="flex items-start gap-3 p-3 rounded-md border border-stone-800/50 bg-stone-900/30 hover:border-amber-800/50 hover:bg-amber-950/10 transition-colors">
+                        <div className="display-font font-medium text-amber-300 text-base sm:text-lg flex-shrink-0 min-w-[60px]">{item.label}</div>
+                        <p className="text-xs sm:text-sm text-stone-300 pt-1">{item.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <footer className="mt-12 pt-6 border-t border-stone-900 text-center">
+            <p className="text-xs text-stone-600 italic display-font">EHS 513 · Day 2 · Made by Chidinma Nwatu (The Revolutionary Educator)</p>
+          </footer>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+document.getElementById('loading').classList.add('hidden');
+</script>
+</body>
+</html>
