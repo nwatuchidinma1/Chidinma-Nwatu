@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a1410">
+<title>EHS 515 — Emergency Medical Care</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js" crossorigin></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  html, body { background: #0f0c0a; }
+  body { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes scaleIn { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
+  @keyframes slideRight { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: translateX(0); } }
+  .fade-in { animation: fadeIn 0.4s ease-out; }
+  .scale-in { animation: scaleIn 0.3s ease-out; }
+  .slide-right { animation: slideRight 0.4s ease-out; }
+  .display-font { font-family: 'Fraunces', Georgia, serif; font-optical-sizing: auto; }
+  .grain-overlay::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 1;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3CfeColorMatrix values='0 0 0 0 0.6 0 0 0 0 0.4 0 0 0 0 0.2 0 0 0 0.08 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.4;
+  }
+  #loading { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; color: #d4a574; font-family: 'Fraunces', serif; font-style: italic; font-size: 18px; }
+  #loading.hidden { display: none; }
+</style>
+</head>
+<body>
+<div id="loading">loading your study pack...</div>
+<div id="root"></div>
+
+<script type="text/babel" data-type="module" data-presets="react">
+const { useState, useEffect, useMemo } = React;
+
+const Icon = ({ children, size = 18, className = '' }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>{children}</svg>
+);
+const Activity = (p) => <Icon {...p}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></Icon>;
+const RotateCcw = (p) => <Icon {...p}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></Icon>;
+const ChevronLeft = (p) => <Icon {...p}><path d="m15 18-6-6 6-6"/></Icon>;
+const ChevronRight = (p) => <Icon {...p}><path d="m9 18 6-6-6-6"/></Icon>;
+const Check = (p) => <Icon {...p}><path d="M20 6 9 17l-5-5"/></Icon>;
+const X = (p) => <Icon {...p}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></Icon>;
+const Shuffle = (p) => <Icon {...p}><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22"/><path d="m18 2 4 4-4 4"/><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2"/><path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8"/><path d="m18 14 4 4-4 4"/></Icon>;
+const BookOpen = (p) => <Icon {...p}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></Icon>;
+const Layers = (p) => <Icon {...p}><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></Icon>;
+const FileText = (p) => <Icon {...p}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></Icon>;
+const Target = (p) => <Icon {...p}><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></Icon>;
+const Trophy = (p) => <Icon {...p}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></Icon>;
+
+const MCQ_BANK = [{"topic": "Foundations", "q": "First aid is best defined as:", "options": ["The complete medical treatment of an injury", "Initial care given by a non-expert before professional help arrives", "Specialised hospital procedure", "A government policy on emergency response"], "correct": 1, "explain": "First aid is the immediate care given before professional medical help arrives. Performed by a non-expert."}, {"topic": "Foundations", "q": "Which is NOT one of the three aims of first aid?", "options": ["Preserve life", "Prevent the condition from worsening", "Promote recovery", "Provide diagnosis"], "correct": 3, "explain": "The 3 Ps: Preserve, Prevent, Promote. Diagnosis belongs to medical professionals."}, {"topic": "Foundations", "q": "In the standard ABCs of first aid, C stands for:", "options": ["Compression", "Confusion", "Circulation", "Consciousness"], "correct": 2, "explain": "A=Airway, B=Breathing, C=Circulation."}, {"topic": "Foundations", "q": "In the ABCDE assessment, D usually stands for:", "options": ["Death", "Disability or Defibrillator", "Dehydration", "Damage"], "correct": 1, "explain": "D = Disability (neurological status), Defibrillator, or Deadly bleeding."}, {"topic": "Foundations", "q": "Which is NOT a key component of first aid?", "options": ["Ensure open airway", "Control bleeding", "Diagnose the disease", "Immobilise fractures"], "correct": 2, "explain": "Diagnosis is for medical professionals. First aid focuses on stabilisation."}, {"topic": "Foundations", "q": "A first aid kit should NOT typically contain:", "options": ["Sterile gauze", "Pain relievers like paracetamol", "Prescription antibiotics", "Antiseptic"], "correct": 2, "explain": "Prescription antibiotics require diagnosis and prescription, not appropriate for general first aid kits."}, {"topic": "Foundations", "q": "The first principle when approaching any casualty is:", "options": ["Move them quickly", "Ensure scene safety", "Apply CPR immediately", "Take photos for records"], "correct": 1, "explain": "Always check scene safety first. A second casualty (you) helps no one."}, {"topic": "Foundations", "q": "Universal Precautions in first aid means:", "options": ["Treating only HIV patients with care", "Treating all blood and body fluids as potentially infectious", "Wearing gloves only when blood is visible", "Using one glove per casualty"], "correct": 1, "explain": "Universal Precautions: assume all blood and body fluids could be infectious."}, {"topic": "CPR", "q": "In CPR, the order is:", "options": ["ABC", "CAB", "ACB", "BCA"], "correct": 1, "explain": "For CPR specifically, the sequence flips to CAB: Compressions, Airway, Breathing."}, {"topic": "CPR", "q": "Standard adult CPR compression to breath ratio:", "options": ["15:2", "20:2", "30:2", "50:2"], "correct": 2, "explain": "30 compressions to 2 rescue breaths is one cycle."}, {"topic": "CPR", "q": "Recommended chest compression rate:", "options": ["60-80/min", "80-100/min", "100-120/min", "130-150/min"], "correct": 2, "explain": "100-120 per minute. Think the beat of 'Stayin Alive'."}, {"topic": "CPR", "q": "Adult chest compression depth:", "options": ["1 inch", "2 inches (5 cm)", "3 inches", "4 inches"], "correct": 1, "explain": "At least 2 inches (5 cm), no more than 2.4 inches (6 cm)."}, {"topic": "CPR", "q": "Brain damage from no oxygen begins after about:", "options": ["1 minute", "4 minutes", "10 minutes", "30 minutes"], "correct": 1, "explain": "About 4 minutes without oxygen and irreversible brain damage starts."}, {"topic": "CPR", "q": "To check responsiveness in an infant, you should:", "options": ["Tap the shoulder", "Shake vigorously", "Tap the heel of the foot", "Pour cold water"], "correct": 2, "explain": "Infants under 1 year: tap the heel of the foot."}, {"topic": "CPR", "q": "An AED is used to:", "options": ["Restart breathing", "Stop bleeding", "Shock the heart into normal rhythm", "Open the airway"], "correct": 2, "explain": "Automated External Defibrillator delivers controlled shock."}, {"topic": "CPR", "q": "Which is NOT a cause of cardiac arrest?", "options": ["Ventricular fibrillation", "Asystole", "Pulseless electrical activity", "Mild fever"], "correct": 3, "explain": "VF, VT, asystole, and PEA are the cardiac arrest rhythms. Mild fever is not."}, {"topic": "CPR", "q": "For infant CPR, compressions are done with:", "options": ["Both hands", "One hand heel", "Two fingers", "Thumb only"], "correct": 2, "explain": "Infants under 1: two fingers on lower half of breastbone."}, {"topic": "CPR", "q": "For child CPR (1 to puberty), compressions are:", "options": ["Two fingers", "One or two hands, lower half breastbone", "Both hands fully extended", "Knee on the chest"], "correct": 1, "explain": "Children: heel of one or both hands depending on size."}, {"topic": "CPR", "q": "Hands-only CPR is recommended for:", "options": ["Trained professionals only", "Untrained bystanders", "Drowning victims", "Infants only"], "correct": 1, "explain": "Hands-only is for the untrained or those uncomfortable with rescue breaths."}, {"topic": "CPR", "q": "Compressions should be delivered on:", "options": ["Soft mattress", "Firm surface", "Inclined plane", "Sand"], "correct": 1, "explain": "A firm surface ensures compressions are effective."}, {"topic": "CPR", "q": "Open-airway technique for adult CPR:", "options": ["Jaw thrust only", "Head-tilt, chin-lift", "Pull tongue out", "Tilt head forward"], "correct": 1, "explain": "Head-tilt, chin-lift opens the airway in standard CPR."}, {"topic": "CPR", "q": "Each rescue breath should last about:", "options": ["1 second", "3 seconds", "5 seconds", "10 seconds"], "correct": 0, "explain": "1 second per breath, watching for chest rise."}, {"topic": "CPR", "q": "After AED shock, what comes next?", "options": ["Stop and check pulse", "Resume CPR for 2 minutes", "Wait 5 minutes", "Give another shock"], "correct": 1, "explain": "Resume compressions immediately for 2 minutes before next shock check."}, {"topic": "CPR", "q": "Which is an AIM of CPR?", "options": ["Diagnose disease", "Restore effective circulation and ventilation", "Treat fractures", "Stop hemorrhage"], "correct": 1, "explain": "CPR aims include open airway, ventilation, circulation, restoration, prevention of brain damage."}, {"topic": "Choking", "q": "The Heimlich manoeuvre involves pressure between:", "options": ["Chest and abdomen", "Breastbone and navel", "Shoulder blades", "Ribs"], "correct": 1, "explain": "Place fist between breastbone and navel, thrust inward and upward."}, {"topic": "Choking", "q": "For infant choking, the correct approach is:", "options": ["Abdominal thrusts", "Heimlich manoeuvre", "Five back blows then five chest thrusts", "Mouth-to-mouth"], "correct": 2, "explain": "Infants: back blows + chest thrusts. NOT abdominal thrusts."}, {"topic": "Choking", "q": "How many cycles of back blows for infants per round?", "options": ["3", "5", "10", "15"], "correct": 1, "explain": "5 back blows then 5 chest thrusts per cycle."}, {"topic": "Choking", "q": "Heimlich technique direction of thrust:", "options": ["Downward", "Outward", "Inward and upward", "Horizontal"], "correct": 2, "explain": "Inward AND upward to expel object."}, {"topic": "Choking", "q": "Brain damage from total airway obstruction begins in roughly:", "options": ["1 minute", "5 minutes", "15 minutes", "30 minutes"], "correct": 1, "explain": "About 5 minutes of complete airway obstruction."}, {"topic": "Choking", "q": "For a conscious choking child under 5:", "options": ["Same as adult Heimlich", "Modified gentler abdominal thrusts", "Back blows only", "Do nothing"], "correct": 1, "explain": "Less force than adult Heimlich. Kneel beside the child."}, {"topic": "Choking", "q": "If a choking victim becomes unconscious, you should:", "options": ["Continue Heimlich", "Wait for help", "Begin CPR", "Slap their face"], "correct": 2, "explain": "Once unconscious, start CPR. Each compression may help expel the object."}, {"topic": "Bleeding", "q": "Bright red blood that spurts indicates:", "options": ["Capillary bleed", "Venous bleed", "Arterial bleed", "Lymphatic bleed"], "correct": 2, "explain": "Arterial blood is bright red (oxygenated) and spurts under pressure."}, {"topic": "Bleeding", "q": "Dark red, steady flow:", "options": ["Capillary", "Venous", "Arterial", "Lymphatic"], "correct": 1, "explain": "Venous blood is darker, less pressure, steady flow."}, {"topic": "Bleeding", "q": "When a wound dressing becomes soaked:", "options": ["Remove and replace", "Add more layers on top", "Apply ice", "Wash with alcohol"], "correct": 1, "explain": "Removing it disturbs clotting. Add more on top."}, {"topic": "Bleeding", "q": "A tourniquet should be applied:", "options": ["Directly on wound", "Below wound", "2-3 inches above wound", "Anywhere"], "correct": 2, "explain": "2-3 inches above the wound, never on it. Note time of application."}, {"topic": "Bleeding", "q": "Hemostatic dressings work by:", "options": ["Cooling", "Promoting rapid clotting", "Numbing", "Sealing airtight"], "correct": 1, "explain": "Contains kaolin or chitosan that promotes rapid blood clotting."}, {"topic": "Bleeding", "q": "Hemostatic dressings are most useful for:", "options": ["Minor cuts", "Bleeds where direct pressure failed and tourniquet impossible (groin/neck/armpit)", "All wounds", "Burns"], "correct": 1, "explain": "For high-risk areas where you can't use a tourniquet."}, {"topic": "Bleeding", "q": "Tourniquets should be applied to:", "options": ["Neck", "Trunk", "Arm or leg", "Head"], "correct": 2, "explain": "Limbs only. Never on neck, trunk, or head."}, {"topic": "Bleeding", "q": "Why should a tourniquet remain visible?", "options": ["Aesthetics", "Medical personnel must know about it", "To match outfit", "To stop bleeding more"], "correct": 1, "explain": "Don't cover with clothing. Medics must see it on arrival."}, {"topic": "Bleeding", "q": "Order of priorities in trauma care:", "options": ["Bones to Bleeding to Breathing", "Breathing to Bleeding to Bones", "Breathing to Bones to Bleeding", "Bleeding to Breathing to Bones"], "correct": 1, "explain": "Breathing first, then bleeding, then bones."}, {"topic": "Bleeding", "q": "To control bleeding, the immediate first step is:", "options": ["Apply tourniquet", "Direct pressure", "Run to hospital", "Apply alcohol"], "correct": 1, "explain": "Direct pressure on the wound is always step one."}, {"topic": "Bleeding", "q": "Elevation of bleeding limb helps because:", "options": ["Looks dramatic", "Reduces blood flow to wound", "Increases blood flow", "Has no effect"], "correct": 1, "explain": "Raising above heart level reduces blood pressure to the wound."}, {"topic": "Bleeding", "q": "Capillary bleeding looks like:", "options": ["Spurting bright red", "Steady dark red", "Trickle of dark red", "Clear fluid"], "correct": 2, "explain": "Capillary: small trickle, often stops on its own."}, {"topic": "Burns", "q": "First-degree burn affects:", "options": ["Epidermis only", "Epidermis + dermis", "All 3 layers + fat", "Muscle and bone"], "correct": 0, "explain": "Superficial - epidermis only. Red, swollen, painful, no blisters."}, {"topic": "Burns", "q": "Second-degree burns develop blisters within:", "options": ["1 hour", "12 hours", "24 hours", "1 week"], "correct": 2, "explain": "Blisters appear within 24 hours of partial-thickness burn."}, {"topic": "Burns", "q": "A leathery, white or black, painless burn is:", "options": ["First-degree", "Second-degree", "Third-degree", "Sunburn"], "correct": 2, "explain": "Third-degree burns destroy nerve endings, hence painless. Looks leathery."}, {"topic": "Burns", "q": "Most common class of fire in homes:", "options": ["A", "B", "D", "K"], "correct": 3, "explain": "Class K = kitchen fires. Most common at home."}, {"topic": "Burns", "q": "Class C fires involve:", "options": ["Wood/paper", "Liquids/gases", "Electrical", "Cooking grease"], "correct": 2, "explain": "Class C = electrical fires."}, {"topic": "Burns", "q": "Class B fires involve:", "options": ["Wood/paper", "Liquids and gases", "Electrical", "Metals"], "correct": 1, "explain": "Class B = liquids and gases like propane, petrol."}, {"topic": "Burns", "q": "Class D fires involve:", "options": ["Solids", "Liquids", "Electrical", "Burning metals"], "correct": 3, "explain": "Class D = burning metals (less common)."}, {"topic": "Burns", "q": "Class A fires involve:", "options": ["Paper, wood, cloth, solids", "Liquids", "Electrical", "Metals"], "correct": 0, "explain": "Class A = ordinary combustible solids."}, {"topic": "Burns", "q": "First response to clothing on fire:", "options": ["Run", "Stop, Drop, Roll", "Apply ice", "Call emergency immediately"], "correct": 1, "explain": "Stop, Drop, Roll smothers the flames."}, {"topic": "Burns", "q": "Which should NOT be applied to a fresh burn?", "options": ["Cool running water", "Sterile dressing", "Toothpaste or palm oil", "Plastic wrap"], "correct": 2, "explain": "No toothpaste, palm oil, butter. Use only cool water."}, {"topic": "Burns", "q": "Burns should be cooled with:", "options": ["Ice", "Room-temperature water 10-20 mins", "Hot water", "Alcohol"], "correct": 1, "explain": "Room-temp water for 10-20 mins. Ice damages tissue."}, {"topic": "Burns", "q": "Rhabdomyolysis is a complication of severe burns. It involves:", "options": ["Muscle breakdown releasing myoglobin into blood, harming kidneys", "Bone fracture", "Lung infection", "Mental confusion"], "correct": 0, "explain": "Muscle breakdown releases myoglobin which damages kidneys."}, {"topic": "Burns", "q": "Burn blisters should be:", "options": ["Burst immediately", "Left intact - they protect from infection", "Covered in oil", "Rubbed vigorously"], "correct": 1, "explain": "Don't pop blisters. They serve as a sterile barrier."}, {"topic": "Burns", "q": "Eschars in severe burns can:", "options": ["Heal quickly", "Compress limbs/chest causing further injury", "Reduce pain", "Stop bleeding"], "correct": 1, "explain": "Thick crusty surfaces can constrict and cause damage."}, {"topic": "Burns", "q": "A burn larger than the victim's palm should be:", "options": ["Treated at home", "Wrapped tightly", "Referred to hospital", "Ignored"], "correct": 2, "explain": "Palm rule: bigger than palm needs medical attention."}, {"topic": "Drowning", "q": "Drowning resuscitation order:", "options": ["Standard CPR (compressions first)", "Rescue breathing before chest compressions", "Chest compressions only", "Mouth-to-nose only"], "correct": 1, "explain": "Drowning is unique. Rescue breaths come BEFORE compressions."}, {"topic": "Drowning", "q": "Dry drowning:", "options": ["Drowning in sand", "Vocal cord spasm prevents water entry but blocks breathing", "Desert death", "Hours later"], "correct": 1, "explain": "Vocal cord spasm blocks airway without water entering lungs."}, {"topic": "Drowning", "q": "Globally, drowning is:", "options": ["Top 50 cause of accidental death", "Top 10 cause of accidental death", "Most common death", "Rarely fatal"], "correct": 1, "explain": "Drowning is in the top 10 causes of accidental death globally."}, {"topic": "Drowning", "q": "What percentage of drowning victims over 1 are male?", "options": ["20%", "50%", "80%", "100%"], "correct": 2, "explain": "About 80% of drowning victims over 1 year are male."}, {"topic": "Drowning", "q": "Children with seizures have how much higher drowning risk?", "options": ["2x", "5x", "20x", "100x"], "correct": 2, "explain": "20 times greater drowning risk in seizure patients."}, {"topic": "Drowning", "q": "Cyanosis after drowning means:", "options": ["Excellent oxygenation", "Blue skin from low oxygen", "Heat stroke", "Bleeding"], "correct": 1, "explain": "Cyanosis = blue tinge from low blood oxygen."}, {"topic": "Drowning", "q": "For a drowning rescue with possible spinal injury:", "options": ["Move neck freely", "Move neck as little as possible", "Twist the head", "Apply traction"], "correct": 1, "explain": "Diving accidents can cause spinal injury. Minimise neck movement."}, {"topic": "Electrical", "q": "To approach an electric shock victim still in contact with source:", "options": ["Pull with bare hands", "Pour water", "Turn off source or use non-conducting object", "Begin CPR immediately"], "correct": 2, "explain": "Never touch a live victim. Cut power or use wood/cardboard."}, {"topic": "Electrical", "q": "Suitable items to push electrical source away include:", "options": ["Metal rod", "Wet cloth", "Dry wood, plastic, cardboard", "Bare hands"], "correct": 2, "explain": "Use dry, non-conducting materials only."}, {"topic": "Electrical", "q": "Burns from electrical injury should be covered with:", "options": ["Wool blanket", "Towel", "Sterile gauze", "Newspaper"], "correct": 2, "explain": "Sterile gauze. Wool/towel fibres can stick to wounds."}, {"topic": "Allergy", "q": "The antibody most associated with allergic reactions:", "options": ["IgA", "IgE", "IgG", "IgM"], "correct": 1, "explain": "IgE binds to mast cells and basophils, releasing histamine."}, {"topic": "Allergy", "q": "First-line treatment for anaphylaxis:", "options": ["Antihistamine tablets", "Corticosteroids", "Epinephrine injection", "Inhaled albuterol"], "correct": 2, "explain": "Epinephrine first, always. Other treatments come after."}, {"topic": "Allergy", "q": "Anaphylactoid reactions differ from anaphylactic in:", "options": ["Severity", "Not IgE-mediated, can occur on first exposure", "Only affecting children", "Requiring no treatment"], "correct": 1, "explain": "Anaphylactoid: non-IgE, possible on first exposure."}, {"topic": "Allergy", "q": "Hives are also called:", "options": ["Eczema", "Urticaria", "Angioedema", "Psoriasis"], "correct": 1, "explain": "Urticaria = hives. Angioedema is deeper swelling."}, {"topic": "Allergy", "q": "Anaphylaxis usually onsets within:", "options": ["1 minute", "15 minutes", "1 hour", "6 hours"], "correct": 1, "explain": "Within 15 minutes typically; rarely up to 1 hour."}, {"topic": "Allergy", "q": "Common food triggers of anaphylaxis include:", "options": ["Bread, rice, pasta", "Eggs, seafood, nuts", "Vegetables", "Fruit"], "correct": 1, "explain": "Eggs, seafood, and nuts are top triggers."}, {"topic": "Allergy", "q": "Penicillin is famous as a trigger of:", "options": ["Common cold", "Anaphylaxis", "Heart attack", "Stroke"], "correct": 1, "explain": "Penicillin is a classic anaphylaxis trigger."}, {"topic": "Allergy", "q": "Allergen immunotherapy (desensitisation) usually takes:", "options": ["1 week", "1 month", "6 months", "3-5 years"], "correct": 3, "explain": "Gradual exposure over 3-5 years to retrain the immune system."}, {"topic": "Allergy", "q": "Angioedema is dangerous especially when in:", "options": ["Hands", "Face/throat/airways", "Feet", "Back"], "correct": 1, "explain": "Throat swelling can close the airway."}, {"topic": "Bites", "q": "Bee stinger removal:", "options": ["Squeeze out", "Suck out", "Scrape with card", "Leave it"], "correct": 2, "explain": "Squeezing releases more venom. Scrape it."}, {"topic": "Bites", "q": "Snake bite first aid:", "options": ["Suck venom", "Cut wound", "Limb below heart, immobilise", "Tight tourniquet"], "correct": 2, "explain": "Limb below heart, immobilise, transport. Never cut or suck."}, {"topic": "Bites", "q": "Dog bite wash time:", "options": ["1 minute", "5 minutes", "10 minutes", "30 minutes"], "correct": 2, "explain": "At least 10 mins with soap and running water. Refer for rabies."}, {"topic": "Bites", "q": "After a dog bite, the victim should also receive:", "options": ["Aspirin", "Rabies vaccine and tetanus", "Antibiotics", "Steroids"], "correct": 1, "explain": "Rabies vaccination and tetanus injection are essential."}, {"topic": "Bites", "q": "For insect bite, after stinger removal you apply:", "options": ["Heat", "Cold compress", "Alcohol", "Pressure"], "correct": 1, "explain": "Cold compress for 10-20 mins."}, {"topic": "Bites", "q": "Snake bite: limb position should be:", "options": ["Above heart", "Below heart", "Same level", "Doesn't matter"], "correct": 1, "explain": "Below heart level slows venom spread."}, {"topic": "Stroke", "q": "FAST in stroke recognition:", "options": ["Face Arm Speech Time", "Fast Action Strength Treatment", "Face Arm Sweat Touch", "First Aid Service Team"], "correct": 0, "explain": "Face droop, Arm weakness, Speech slurred, Time to call emergency."}, {"topic": "Stroke", "q": "In FAST, the F is tested by:", "options": ["Smiling and looking for one-side droop", "Counting fingers", "Asking about feelings", "Pinching face"], "correct": 0, "explain": "Ask them to smile. One side will droop in stroke."}, {"topic": "Stroke", "q": "In FAST, the A test is:", "options": ["Asking name", "Raising both arms - watching one drift", "Touching their arm", "Aiming a flashlight"], "correct": 1, "explain": "Both arms raised - in stroke, one drifts down."}, {"topic": "Fractures", "q": "A splint is used to:", "options": ["Stop bleeding", "Cool burns", "Support and immobilise broken bones", "Treat shock"], "correct": 2, "explain": "Splints immobilise broken bones."}, {"topic": "Fractures", "q": "A splint can be improvised from:", "options": ["Stick and clothing", "Glass", "Sand", "Cotton wool"], "correct": 0, "explain": "A stick + cloth/clothing makes a basic splint."}, {"topic": "Eyes", "q": "Embedded object in the eye:", "options": ["Remove immediately", "Wash with hot water", "Leave in place, cover, refer to hospital", "Apply pressure"], "correct": 2, "explain": "Never remove embedded objects. Cover and refer."}, {"topic": "Eyes", "q": "Chemical splash to the eye, flush time:", "options": ["1 minute", "5 minutes", "At least 10 minutes", "Just a few seconds"], "correct": 2, "explain": "At least 10 minutes of flushing."}, {"topic": "Home", "q": "System to reduce radon in homes:", "options": ["Radon vacuum", "Soil suction radon reduction system", "Carbon scrubber", "Air dehumidifier"], "correct": 1, "explain": "Soil suction system uses vent pipe + fan to pull radon out."}, {"topic": "Home", "q": "Carbon monoxide is dangerous because:", "options": ["Visible", "Odourless and colourless", "Sweet-smelling", "Acidic"], "correct": 1, "explain": "CO is undetectable to senses. Need CO detectors."}, {"topic": "Home", "q": "Fire sprinkler triggers from:", "options": ["Smoke", "Heat from closest source", "Voice", "Wiring"], "correct": 1, "explain": "Only the sprinkler nearest to heat activates."}, {"topic": "Home", "q": "Carbon monoxide detectors should be placed:", "options": ["One per house", "At least one per floor", "Only in kitchen", "In garage only"], "correct": 1, "explain": "Minimum one per floor, ideally one per room."}, {"topic": "Home", "q": "Heat detectors are useful in:", "options": ["Bedrooms", "Living rooms", "Laundry, garage, attic where smoke detectors aren't suitable", "Bathrooms"], "correct": 2, "explain": "Used where smoke detectors get false alarms."}, {"topic": "Home", "q": "Toxic mould is best controlled by:", "options": ["Painting over it", "Water and moisture control", "Ignoring it", "Adding humidity"], "correct": 1, "explain": "Mould thrives on moisture. Control water = control mould."}, {"topic": "Playground", "q": "RICE stands for:", "options": ["Rest Ice Compression Elevation", "Rinse Ice Cover Examine", "Rapid Immediate Care Eval", "Recover Inspect Cool Eat"], "correct": 0, "explain": "Rest, Ice, Compression, Elevation. For sprains and soft tissue."}, {"topic": "Playground", "q": "Tennis elbow is medically:", "options": ["Bursitis", "Tendinitis", "Epicondylitis", "Carpal tunnel"], "correct": 2, "explain": "Lateral epicondylitis = tennis elbow."}, {"topic": "Playground", "q": "Concussion treatment includes:", "options": ["Heavy exercise", "Rest, time, acetaminophen", "Caffeine", "Cold showers"], "correct": 1, "explain": "Brain rest and time. Acetaminophen for pain (NOT aspirin)."}, {"topic": "Workplace", "q": "Top cause of workplace death (USA 2004):", "options": ["Falls", "Assault", "Traffic incidents", "Harmful substances"], "correct": 2, "explain": "Traffic-related = 45%."}, {"topic": "Workplace", "q": "OSHA stands for:", "options": ["Office Safety Health Authority", "Occupational Safety and Health Administration", "Operational Safety Health Awareness", "Open Source Health Agency"], "correct": 1, "explain": "US federal agency for workplace safety."}, {"topic": "Workplace", "q": "Workers' comp 'mod' compares:", "options": ["Yearly profits", "Company accident rate to industry over 3 years", "Number of employees", "Worker satisfaction"], "correct": 1, "explain": "3-year experience modification factor affects insurance premiums."}, {"topic": "Workplace", "q": "OSHA's three goals include:", "options": ["Maximise profit", "Improve safety, change culture, secure public confidence", "Hire more inspectors", "Reduce work hours"], "correct": 1, "explain": "Improve worker safety/health, change culture, secure confidence."}, {"topic": "Hospital", "q": "Hand washing duration:", "options": ["5-10 sec", "20-30 sec", "40-60 sec", "2 min"], "correct": 2, "explain": "40-60 seconds with soap. 20-30 sec for alcohol rub."}, {"topic": "Hospital", "q": "Alcohol hand rub time:", "options": ["5-10 sec", "20-30 sec", "60 sec", "2 min"], "correct": 1, "explain": "20-30 seconds covers all surfaces and dries."}, {"topic": "Hospital", "q": "Major bloodborne pathogens:", "options": ["HBV, HCV, HIV", "Influenza", "E. coli", "Tuberculosis"], "correct": 0, "explain": "Hepatitis B, C, and HIV are key bloodborne pathogens."}, {"topic": "Hospital", "q": "Spacing for respiratory patients:", "options": ["0.5 m", "1 m / 3 ft", "5 m", "10 m"], "correct": 1, "explain": "At least 1 metre apart in waiting areas."}, {"topic": "Hospital", "q": "Universal Precautions assume:", "options": ["Only diagnosed cases dangerous", "All blood/body fluids are infectious", "HIV-positive only", "Gloves alone enough"], "correct": 1, "explain": "Treat ALL fluids as if infectious."}, {"topic": "Hospital", "q": "Glove removal technique:", "options": ["Pull from fingertips", "Peel inside-out without touching skin", "Roll up", "Cut with scissors"], "correct": 1, "explain": "Peel inside-out so contamination stays inside."}, {"topic": "Conference", "q": "In conference safety, anticipation means:", "options": ["Planning food early", "Thinking ahead about possible incidents and consequences", "Booking venues", "Sending invitations"], "correct": 1, "explain": "Forward thinking about what could happen."}, {"topic": "Conference", "q": "Distancing during outbreaks at conferences:", "options": ["1 ft", "3 ft", "6 ft / 2 m", "10 ft"], "correct": 2, "explain": "6 feet (about 2 metres) is standard."}, {"topic": "Conference", "q": "Disinfection frequency during outbreaks:", "options": ["Daily", "Every 5 people or 15 minutes", "Weekly", "Monthly"], "correct": 1, "explain": "Whichever comes first - 5 people or 15 minutes."}];
+const FLASHCARDS = [{"term": "First Aid", "def": "Initial care given to a sick or injured person by a non-expert before professional medical help arrives."}, {"term": "3 Ps of First Aid", "def": "Preserve life, Prevent the condition from worsening, Promote recovery."}, {"term": "ABCs", "def": "Airway, Breathing, Circulation. Standard assessment for unconscious casualty."}, {"term": "ABCDE", "def": "Airway, Breathing, Circulation, Disability, Examination/Exposure. The full primary survey."}, {"term": "CAB", "def": "Compressions, Airway, Breathing. Specifically for CPR sequencing."}, {"term": "CPR Ratio", "def": "30 chest compressions to 2 rescue breaths = 1 cycle."}, {"term": "Compression Rate", "def": "100-120 per minute. Beat of Stayin Alive."}, {"term": "Compression Depth (Adult)", "def": "At least 2 inches (5 cm), no more than 2.4 inches (6 cm)."}, {"term": "Compression Depth (Infant)", "def": "About 1.5 inches (4 cm), using two fingers."}, {"term": "AED", "def": "Automated External Defibrillator. Delivers a controlled shock to restore normal heart rhythm."}, {"term": "Heimlich Manoeuvre", "def": "Abdominal thrusts between breastbone and navel for choking adults and children over 5."}, {"term": "Infant Choking", "def": "5 back blows then 5 chest thrusts. NOT abdominal thrusts."}, {"term": "Capillary Bleeding", "def": "Trickle of dark red blood. Smallest vessels. Often self-limits."}, {"term": "Venous Bleeding", "def": "Steady flow, dark red. Mild to severe."}, {"term": "Arterial Bleeding", "def": "Bright red, spurting. Severe rapid blood loss."}, {"term": "Direct Pressure", "def": "First-line bleeding control - press cloth firmly on wound."}, {"term": "Tourniquet Placement", "def": "2-3 inches above the wound (never on it). Note application time."}, {"term": "Hemostatic Dressing", "def": "Wound dressing with kaolin/chitosan that promotes rapid clotting. Used when direct pressure fails."}, {"term": "First-Degree Burn", "def": "Superficial. Epidermis only. Red, painful, no blisters."}, {"term": "Second-Degree Burn", "def": "Partial-thickness. Epidermis + dermis. Blisters in 24 hrs, very painful."}, {"term": "Third-Degree Burn", "def": "Full-thickness. All 3 layers + nerves. Leathery, often painless."}, {"term": "Class A Fire", "def": "Paper, wood, cloth, combustible solids."}, {"term": "Class B Fire", "def": "Liquids and gases (propane, petrol)."}, {"term": "Class C Fire", "def": "Electrical fires."}, {"term": "Class D Fire", "def": "Burning metals (less common)."}, {"term": "Class K Fire", "def": "Kitchen fires (grease, oil). Most common at home."}, {"term": "Burn Treatment Steps", "def": "Stop source, cool with room-temp water 10-20 mins, remove tight items, sterile dressing, refer if serious."}, {"term": "Stop Drop Roll", "def": "For person on fire. Smothers flames by depriving oxygen."}, {"term": "Drowning Resuscitation", "def": "Rescue breathing FIRST, then chest compressions. Unique to drowning."}, {"term": "Dry Drowning", "def": "Vocal cord spasm prevents water entering lungs but blocks breathing."}, {"term": "IgE", "def": "The antibody class mediating allergic reactions. Binds mast cells, releases histamine."}, {"term": "Anaphylaxis", "def": "Sudden, life-threatening allergic reaction. Onset within 15 min usually."}, {"term": "Anaphylaxis Triggers", "def": "Drugs (especially penicillin), insect stings, foods (eggs, seafood, nuts), latex."}, {"term": "Anaphylaxis Treatment", "def": "Epinephrine first. Then breathing tube if needed, IV fluids, antihistamines, beta-agonists, corticosteroids."}, {"term": "Anaphylactoid Reaction", "def": "Looks like anaphylaxis but NOT IgE-mediated. Can occur on first exposure."}, {"term": "Urticaria", "def": "Hives - small red wheals on skin. Type I hypersensitivity."}, {"term": "Angioedema", "def": "Deeper tissue swelling. Dangerous in throat/airways."}, {"term": "EpiPen", "def": "Auto-injector device delivering epinephrine for anaphylaxis emergency."}, {"term": "Snake Bite Don'ts", "def": "NOT cut, suck venom, apply ice, or use tight tourniquet."}, {"term": "Dog Bite Wash Time", "def": "At least 10 minutes with soap and running water. Refer for rabies and tetanus."}, {"term": "FAST (Stroke)", "def": "Face droop, Arm weakness, Speech slurred, Time to call emergency."}, {"term": "Order of Priorities", "def": "Breathing > Bleeding > Bones in trauma care."}, {"term": "RICE", "def": "Rest, Ice, Compression, Elevation. For sprains and soft tissue."}, {"term": "Recovery Position", "def": "Side-lying for unconscious but breathing casualty. Keeps airway open."}, {"term": "Universal Precautions", "def": "Treat ALL blood and body fluids as potentially infectious regardless of diagnosis."}, {"term": "Bloodborne Pathogens", "def": "HBV (Hepatitis B), HCV (Hepatitis C), HIV."}, {"term": "Hand Wash Duration", "def": "40-60 seconds with soap. 20-30 seconds for alcohol rub."}, {"term": "OSHA", "def": "Occupational Safety and Health Administration. US federal workplace safety agency."}, {"term": "Workers Comp Mod", "def": "Experience modification. Compares company accident rate to industry over 3 years. Affects insurance."}, {"term": "Soil Suction Radon System", "def": "Vent pipe and fan that pulls radon gas from beneath house and vents outside."}];
+const ESSAYS = [{"title": "Define first aid and discuss its aims and basic skills", "points": ["Definition: initial care by non-expert before medical help arrives", "3 Ps: Preserve life, Prevent worsening, Promote recovery", "5 basic skills: CPR, Heimlich, splinting, EpiPen, bleeding management", "Key components: airway, breathing, cardiac massage, bleeding control, fracture immobilisation", "Conclude: foundation skill that turns bystanders into life-savers"]}, {"title": "Describe the steps of CPR for an adult", "points": ["Pre-checks: scene safety, responsiveness, call emergency", "CAB sequence: 30 compressions (5 cm depth, 100-120/min), head-tilt chin-lift, 2 rescue breaths (1 sec each)", "Continue cycles until help arrives", "AED use when available, follow prompts, resume CPR after shock", "Hands-only CPR option for the untrained", "Brain damage starts at 4 minutes without oxygen"]}, {"title": "Discuss the management of severe bleeding", "points": ["Three types: capillary, venous, arterial (with appearance)", "Standard steps: gloves, rinse, gauze, direct pressure, elevation, do not remove soaked cloth", "Tourniquet: 2-3 inches above wound, note time, do not loosen", "Hemostatic dressing for hard-to-tourniquet sites (groin, neck, armpit)", "When to refer: arterial, won't stop, deep wound, animal bite", "Order of priorities: Breathing > Bleeding > Bones"]}, {"title": "Classify burns by depth and outline first aid treatment", "points": ["Three depths: superficial, partial, full-thickness", "Severity: minor vs moderate/severe (palm rule, body areas)", "Five fire classes: A, B, C, D, K", "Treatment: stop source, cool with room-temp water 10-20 mins, remove tight items, cover, refer if serious", "Don'ts: ice, oil/butter/toothpaste, bursting blisters", "Complications: dehydration, shock, rhabdomyolysis, infection, eschars, hypothermia"]}, {"title": "Discuss anaphylaxis: causes, symptoms, treatment, prevention", "points": ["Definition: sudden life-threatening allergic reaction", "Mechanism: IgE-mediated mast cell degranulation, histamine release", "Triggers: drugs (penicillin), insect venom, foods, latex", "Onset within 15 minutes", "Symptoms: itching, hives, swelling, wheezing, BP drop, GI upset, possible collapse", "Treatment: epinephrine first, breathing tube if needed, IV fluids, antihistamines, beta-agonists, corticosteroids", "Prevention: avoidance, EpiPen, medical alert bracelet, immunotherapy", "Differentiate from anaphylactoid (no IgE, first exposure possible)"]}, {"title": "Describe drowning, complications, and first aid management", "points": ["Definition: suffocation from submersion. Top 10 cause of accidental death globally", "High-risk groups: unsupervised children, males, alcohol/drug users, seizure patients", "Two pathways: wet drowning (water in lungs) and dry drowning (vocal cord spasm)", "Complications: brain damage, aspiration pneumonia, ARDS, hypothermia", "First aid: immediate on-site resuscitation, rescue breaths FIRST, minimal neck movement", "Prevention: no alcohol, fenced pools, supervision, life jackets, swimming lessons"]}, {"title": "Explain safety measures for sudden illness and injuries in the home", "points": ["Definition of home safety", "Hazards: chemicals, slips/falls, electric shock, fire, food poison, CO, mould, radon", "Slip prevention: handrails, lighting, slip-resistant surfaces", "Radon: testing, soil suction reduction system", "CO detectors: at least one per floor", "Fire safety: two exits per room, family meeting point, extinguishers, sprinklers, smoke alarms", "Five fire classes: A, B, C, D, K", "Poison control: emergency number, secure medications"]}, {"title": "Discuss workplace safety: injuries, OSHA, and the safety manager", "points": ["Definition", "Common injuries: trips/slips/falls, machinery, vehicle, fire, repetitive stress", "2004 USA stats: 5,764 deaths; traffic 45%, assault 18%, falls 15%; sprains 41.7%, bruises 9.1%", "OSHA 3 goals: improve safety, change culture, secure public confidence", "Safety manager: top management access, advisory role, status reports, accident reporting", "Workers comp mod: 3-year accident rate vs industry average", "Workplace violence: zero-tolerance policy"]}, {"title": "Discuss universal precautions and PPE in hospital safety", "points": ["Definition: treat all blood/body fluids as infectious", "Bloodborne pathogens: HBV, HCV, HIV", "PPE: gloves, gowns, lab coats, face shields, eye protection, pocket masks", "Hand hygiene: 40-60 sec wash, 20-30 sec rub", "Specific measures: gloves between tasks, facial protection for splashes, gowns, sharps prevention", "Respiratory hygiene: cover cough, dispose tissues, 1m spacing", "Environmental cleaning, linen handling, waste disposal", "Glove removal: peel inside-out, hand hygiene after"]}, {"title": "Explain playground safety: injuries, treatment, and rules", "points": ["Common injuries: bumps, fractures, sprains, concussions, runner's knee, Achilles tendinitis", "Causes: accidents, impact, poor training, insufficient warm-up", "Specific treatments: runner's knee (replace shoes, rest), shoulder injury (stretch), Achilles (RICE + calf strengthening), concussion (rest, time)", "RICE = Rest, Ice, Compression, Elevation", "Rules: no running near equipment, proper clothing, no wet/hot equipment, take turns, never alone", "Adult role: supervision, prevention, first aid response"]}, {"title": "Compare and contrast standard CPR and drowning resuscitation", "points": ["Standard CPR: CAB sequence (compressions first)", "Drowning: rescue breaths first because oxygen is the primary issue", "Both: 30:2 ratio for adults, 100-120 compressions/min", "Drowning unique factors: water in lungs, possible spinal injury, hypothermia", "Approach: minimal neck movement in drowning", "Both transition to AED if available"]}, {"title": "Discuss the management of choking in adults vs infants", "points": ["Adult: Heimlich manoeuvre - abdominal thrusts between breastbone and navel", "Position: stand behind, encircle abdomen, fist between breastbone and navel, thrust inward and upward 5x", "Infant under 1: 5 back blows (face down on forearm), 5 chest thrusts (face up, two fingers)", "Why different: infant abdomen too soft for thrusts", "If becomes unconscious: start CPR", "Brain damage from total obstruction in 5 minutes"]}, {"title": "Describe the use of a tourniquet and hemostatic dressing", "points": ["Tourniquet: tight band stopping blood flow when direct pressure fails", "Placement: 2-3 inches above wound, never on it", "Note time of application", "Limbs only - never neck, head, trunk", "Don't cover with clothing", "Hemostatic dressing: kaolin or chitosan promote clotting", "Use when direct pressure fails AND tourniquet impossible (groin, neck, armpit)", "Apply: expose wound, pack firmly, direct pressure 3-5 min, secure"]}, {"title": "Discuss snake bite first aid management", "points": ["Keep victim calm and still", "Lay them down", "Bitten limb BELOW heart level", "Remove tight clothing, jewellery", "Immobilise the limb with splint", "Cover bite loosely with clean dressing", "Transport to hospital immediately", "Don'ts: cut wound, suck venom, apply ice, tight tourniquet", "Why these don'ts: spread venom, tissue damage, no benefit"]}, {"title": "Explain stroke recognition using FAST", "points": ["Definition: sudden brain function loss from blocked or burst blood vessel", "FAST: Face droop (smile test), Arm weakness (raise both arms), Speech slurred (test with phrase), Time to call emergency", "Why time critical: every minute brain cells die", "Risk factors: hypertension, smoking, diabetes, age", "Bystander role: recognise FAST signs, call emergency, note time of onset"]}, {"title": "Discuss safety in conference halls during disease outbreaks", "points": ["3 planning principles: anticipation, readiness to act, fail-safe mechanisms", "PPE for staff", "Plexiglas shields and face shields", "Floor markers for 6 ft / 2 m distancing", "Daily symptom assessment", "Disinfect surfaces every 5 people or 15 minutes", "Staggered check-in by alphabet", "Wipe handheld microphones, podiums, clickers between speakers", "Directional floor clings", "Separate entrance/exit doors", "No self-serve buffets"]}, {"title": "Describe the role of bystander first aid in community health", "points": ["Bystanders are first responders before emergency services arrive", "Time is tissue: brain damage in 4 min, total airway block in 5 min", "Skills needed: CPR, choking, bleeding, burn management", "Reduces fatality and disability rates", "Importance of community training", "WHO and Red Cross programs", "Empowers ordinary people to save lives", "Public access defibrillators support"]}, {"title": "Discuss the management of electric shock injuries", "points": ["Causes: faulty wiring, exposed cables, lightning, industrial accidents", "Severity factors: current type, voltage, path through body, health status, treatment speed", "Emergency signs: severe burns, confusion, breathing trouble, cardiac arrest, seizures", "First action: turn off source OR push away with non-conducting object", "Never touch live victim", "Begin CPR if no signs of circulation", "Cover burns with sterile gauze (not blanket - fibres stick)", "Prevention: maintenance, qualified installers, outlet guards, GFCI in wet areas"]}, {"title": "Discuss bites and stings - bees, snakes, dogs, scorpions", "points": ["Insect: scrape stinger with card, wash, cold compress, watch for anaphylaxis", "Bee/wasp: scrape, clean, cold pack, calamine; if anaphylaxis: epinephrine", "Snake: limb below heart, immobilise, transport; never cut/suck/ice", "Dog: wash 10+ minutes, antiseptic, cover, refer for rabies/tetanus", "Scorpion/spider: wash, cold compress, monitor, seek care", "Anaphylaxis warning signs in all: breathing trouble, facial swelling, dizziness"]}, {"title": "Discuss home safety hazards and prevention", "points": ["Slips and falls: handrails, lighting, slip-resistant surfaces, walking aids", "Radon: passive/active detectors, soil suction reduction system", "CO: odourless, colourless, deadly; detectors per floor", "Mould: moisture control, washing with brush, repaint", "Fire safety plan: 2 exits per room, family meeting point, drills", "Fire equipment: extinguishers (matched to class), sprinklers, smoke alarms, heat detectors", "Poison control: number handy, secure meds, ID poisonous plants"]}, {"title": "Describe the principles of fire safety in the home", "points": ["Fire triangle: fuel + heat + oxygen", "Five fire classes: A (solids), B (liquids/gases), C (electrical), D (metals), K (kitchen)", "Match extinguisher to class - never water on Class C electrical", "Fire sprinklers triggered by heat from closest source", "Smoke detectors: battery, audible/visual alarm", "Heat detectors for laundry/garage/attic", "Two exits per room, family meeting point", "Stop, Drop, Roll for clothing fires"]}, {"title": "Explain the role of PPE and infection control in hospitals", "points": ["Universal Precautions: all fluids potentially infectious", "Bloodborne pathogens: HBV, HCV, HIV", "PPE: gloves, gowns, lab coats, face shields, eye protection, masks", "Hand hygiene: 40-60 sec wash, 20-30 sec rub", "When: before/after patient contact, after fluid contact, between tasks", "Sharps prevention: careful handling, disposal in puncture-proof containers", "Respiratory hygiene: cover cough, dispose tissues, 1m spacing", "Environmental cleaning of high-touch surfaces"]}, {"title": "Discuss the categories and treatment of common workplace injuries", "points": ["Trips/slips/falls (15% of fatalities)", "Machinery accidents", "Vehicle/traffic (45% - top cause)", "Fire/explosion", "Repetitive stress (carpal tunnel)", "Overexertion (back injuries)", "2004 USA: 5,764 deaths; sprains 41.7%, bruises 9.1%, cuts 7.8%, fractures 7.5%", "Treatment per injury type", "Prevention: PPE, training, equipment controls, drug testing, periodic medical exams"]}, {"title": "Describe Acute Mountain Sickness, HAPE, and HACE", "points": ["Acute Mountain Sickness: headache + symptoms after altitude gain >2500m", "Symptoms: nausea, fatigue, dizziness", "HACE: high-altitude cerebral oedema - confusion, ataxia, possible coma", "HAPE: pulmonary oedema - dyspnea, frothy pink sputum", "Treatment AMS: rest, descend if persists, acetazolamide, NSAIDs", "Treatment HACE/HAPE: emergency descent 500-1000m, oxygen, dexamethasone (HACE), nifedipine (HAPE)", "Prevention: gradual ascent (no >300m sleeping altitude/day), rest days every 2-3 days", "ALARA related principles: time, distance, shielding don't apply but pacing does"]}, {"title": "Discuss the management of fractures and the use of splints", "points": ["Fracture: break in continuity of bone", "Types: open (compound), closed (simple), greenstick, comminuted", "Signs: pain, swelling, deformity, loss of function", "Splint: rigid material to immobilise", "Improvise with stick + cloth", "Order: Breathing > Bleeding > Bones", "Open fractures: control bleeding first, don't push bone back in", "Refer to hospital", "Don't move unnecessarily"]}];
+const QUICK_REFERENCE = [{"category": "Critical Numbers", "items": [{"label": "30:2", "desc": "Compressions to rescue breaths"}, {"label": "100-120", "desc": "Compressions per minute"}, {"label": "5 cm", "desc": "Adult compression depth"}, {"label": "4 min", "desc": "Brain damage onset"}, {"label": "5 min", "desc": "Total airway block damage"}, {"label": "40-60 sec", "desc": "Hand washing"}, {"label": "20-30 sec", "desc": "Alcohol hand rub"}, {"label": "1 m", "desc": "Respiratory patient spacing"}, {"label": "6 ft / 2 m", "desc": "Conference distancing"}, {"label": "10 min", "desc": "Dog bite wash time"}, {"label": "15 min", "desc": "Anaphylaxis onset"}, {"label": "10-20 min", "desc": "Burn cooling time"}, {"label": "2-3 in", "desc": "Tourniquet above wound"}, {"label": "3-5 min", "desc": "Hemostatic dressing pressure"}]}, {"category": "Mnemonics", "items": [{"label": "3 Ps", "desc": "Preserve, Prevent, Promote"}, {"label": "ABCDE", "desc": "Airway, Breathing, Circulation, Disability, Exam"}, {"label": "CAB", "desc": "Compressions, Airway, Breathing (CPR)"}, {"label": "FAST", "desc": "Face, Arm, Speech, Time (stroke)"}, {"label": "RICE", "desc": "Rest, Ice, Compression, Elevation"}, {"label": "Stop Drop Roll", "desc": "Person on fire"}, {"label": "B>B>B", "desc": "Breathing > Bleeding > Bones"}]}, {"category": "Fire Classes", "items": [{"label": "A", "desc": "Paper, wood, cloth, solids"}, {"label": "B", "desc": "Liquids, gases (propane, petrol)"}, {"label": "C", "desc": "Electrical fires"}, {"label": "D", "desc": "Burning metals (rare)"}, {"label": "K", "desc": "Kitchen (grease, oil) - most common"}]}, {"category": "Burn Degrees", "items": [{"label": "1st", "desc": "Epidermis only. Red, no blisters"}, {"label": "2nd", "desc": "Epidermis + dermis. Blisters in 24h, very painful"}, {"label": "3rd", "desc": "All layers + nerves. Leathery, often painless"}]}, {"category": "Bleeding Types", "items": [{"label": "Capillary", "desc": "Trickle, dark red. Mild"}, {"label": "Venous", "desc": "Steady flow, dark red"}, {"label": "Arterial", "desc": "Bright red, spurting. Severe"}]}];
+
+function App() {
+  const [mode, setMode] = useState('home');
+  const [topicFilter, setTopicFilter] = useState('All');
+  const [questionIndex, setQuestionIndex] = useState(0);
+  const [selected, setSelected] = useState(null);
+  const [revealed, setRevealed] = useState(false);
+  const [score, setScore] = useState({ correct: 0, total: 0 });
+  const [shuffled, setShuffled] = useState(false);
+  const [questionOrder, setQuestionOrder] = useState([]);
+  const [flashIndex, setFlashIndex] = useState(0);
+  const [flashFlipped, setFlashFlipped] = useState(false);
+  const [flashOrder, setFlashOrder] = useState([]);
+  const [essayIndex, setEssayIndex] = useState(0);
+  const [revealedEssay, setRevealedEssay] = useState(false);
+
+  const topics = ['All', ...new Set(MCQ_BANK.map(q => q.topic))];
+
+  const filteredQuestions = useMemo(() => {
+    if (topicFilter === 'All') return MCQ_BANK;
+    return MCQ_BANK.filter(q => q.topic === topicFilter);
+  }, [topicFilter]);
+
+  useEffect(() => {
+    const order = filteredQuestions.map((_, i) => i);
+    if (shuffled) {
+      for (let i = order.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [order[i], order[j]] = [order[j], order[i]];
+      }
+    }
+    setQuestionOrder(order);
+    setQuestionIndex(0);
+    setSelected(null);
+    setRevealed(false);
+    setScore({ correct: 0, total: 0 });
+  }, [topicFilter, shuffled, filteredQuestions]);
+
+  useEffect(() => { setFlashOrder(FLASHCARDS.map((_, i) => i)); }, []);
+
+  const currentQ = filteredQuestions[questionOrder[questionIndex]];
+
+  const handleAnswer = (idx) => {
+    if (revealed) return;
+    setSelected(idx);
+    setRevealed(true);
+    setScore(s => ({ correct: s.correct + (idx === currentQ.correct ? 1 : 0), total: s.total + 1 }));
+  };
+
+  const nextQuestion = () => {
+    if (questionIndex < questionOrder.length - 1) {
+      setQuestionIndex(i => i + 1);
+      setSelected(null);
+      setRevealed(false);
+    }
+  };
+
+  const prevQuestion = () => {
+    if (questionIndex > 0) {
+      setQuestionIndex(i => i - 1);
+      setSelected(null);
+      setRevealed(false);
+    }
+  };
+
+  const restart = () => {
+    setQuestionIndex(0);
+    setSelected(null);
+    setRevealed(false);
+    setScore({ correct: 0, total: 0 });
+  };
+
+  const shuffleFlash = () => {
+    const order = [...flashOrder];
+    for (let i = order.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+    setFlashOrder(order);
+    setFlashIndex(0);
+    setFlashFlipped(false);
+  };
+
+  const currentFlash = FLASHCARDS[flashOrder[flashIndex]];
+  const currentEssay = ESSAYS[essayIndex];
+
+  return (
+    <div className="min-h-screen text-stone-100" style={{ background: 'radial-gradient(ellipse at top, #2a1f17 0%, #1a1410 50%, #0f0c0a 100%)', fontFamily: '"Plus Jakarta Sans", -apple-system, sans-serif' }}>
+      <div className="grain-overlay">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10 relative" style={{ zIndex: 2 }}>
+
+          <header className="mb-8 sm:mb-12 fade-in">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="h-px w-8 bg-amber-600/60"></div>
+              <span className="text-xs uppercase tracking-[0.3em] text-amber-500/80">EHS 515 · Day 1</span>
+            </div>
+            <h1 className="display-font text-4xl sm:text-6xl font-medium leading-[0.95] mb-3" style={{ color: '#f5e8d0' }}>
+              Emergency<br/>
+              <span className="italic" style={{ color: '#d4a574' }}>Medical Care</span>
+            </h1>
+            <p className="text-stone-400 text-sm sm:text-base max-w-xl">Your study companion for Saturday's exam. Quiz to test, flashcards to memorise, essays to plan, quick ref to drill.</p>
+          </header>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-6 sm:mb-8">
+            {[
+              { id: 'home', label: 'Quiz', icon: Target, desc: MCQ_BANK.length + ' MCQs' },
+              { id: 'flash', label: 'Flashcards', icon: Layers, desc: FLASHCARDS.length + ' cards' },
+              { id: 'essay', label: 'Essays', icon: FileText, desc: ESSAYS.length + ' outlines' },
+              { id: 'quick', label: 'Quick Ref', icon: BookOpen, desc: 'Drill cards' }
+            ].map(m => {
+              const I = m.icon;
+              const active = mode === m.id;
+              return (
+                <button key={m.id} onClick={() => setMode(m.id)} className={`group relative p-3 sm:p-4 rounded-lg border transition-all text-left ${active ? 'border-amber-500/60 bg-amber-950/30' : 'border-stone-800 hover:border-stone-700 bg-stone-950/40'}`}>
+                  <I size={18} className={active ? 'text-amber-400' : 'text-stone-400'} />
+                  <div className={`mt-2 text-sm font-medium ${active ? 'text-amber-100' : 'text-stone-200'}`}>{m.label}</div>
+                  <div className="text-[10px] sm:text-xs text-stone-500 mt-0.5">{m.desc}</div>
+                </button>
+              );
+            })}
+          </div>
+
+          {mode === 'home' && currentQ && (
+            <div className="fade-in">
+              <div className="bg-stone-950/60 border border-stone-800 rounded-lg p-4 mb-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="text-xs text-stone-500 uppercase tracking-wider">Question</div>
+                    <div className="display-font text-2xl text-amber-400">{questionIndex + 1}<span className="text-stone-600">/{questionOrder.length}</span></div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <div className="text-xs text-stone-500 uppercase tracking-wider">Score</div>
+                      <div className="display-font text-2xl">
+                        <span style={{ color: score.total > 0 && score.correct/score.total >= 0.7 ? '#86efac' : '#d4a574' }}>{score.correct}</span>
+                        <span className="text-stone-600">/{score.total}</span>
+                      </div>
+                    </div>
+                    <button onClick={restart} className="p-2 hover:bg-stone-800 rounded transition-colors" title="Restart"><RotateCcw size={16} className="text-stone-400" /></button>
+                    <button onClick={() => setShuffled(s => !s)} className={`p-2 rounded transition-colors ${shuffled ? 'bg-amber-950 text-amber-400' : 'hover:bg-stone-800 text-stone-400'}`} title="Shuffle"><Shuffle size={16} /></button>
+                  </div>
+                </div>
+                <div className="h-1 bg-stone-900 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-amber-700 to-amber-500 transition-all duration-500" style={{ width: `${((questionIndex + 1) / questionOrder.length) * 100}%` }}></div>
+                </div>
+                <div className="mt-4 flex flex-wrap gap-1.5">
+                  {topics.map(t => (
+                    <button key={t} onClick={() => setTopicFilter(t)} className={`text-[11px] px-2.5 py-1 rounded-full border transition-colors ${topicFilter === t ? 'border-amber-600 bg-amber-950/50 text-amber-200' : 'border-stone-800 text-stone-400 hover:border-stone-700'}`}>{t}</button>
+                  ))}
+                </div>
+              </div>
+
+              <div key={questionIndex} className="bg-stone-950/60 border border-stone-800 rounded-lg p-5 sm:p-7 scale-in">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.2em] text-amber-500/80 px-2 py-1 rounded-full bg-amber-950/30 border border-amber-900/40">
+                    <Activity size={14} />
+                    {currentQ.topic}
+                  </span>
+                </div>
+                <h2 className="display-font text-xl sm:text-2xl text-stone-100 leading-snug mb-6">{currentQ.q}</h2>
+                <div className="space-y-2">
+                  {currentQ.options.map((opt, i) => {
+                    const isCorrect = i === currentQ.correct;
+                    const isSelected = selected === i;
+                    let cls = 'border-stone-800 hover:border-stone-700 bg-stone-900/30';
+                    if (revealed) {
+                      if (isCorrect) cls = 'border-emerald-700 bg-emerald-950/40 text-emerald-100';
+                      else if (isSelected && !isCorrect) cls = 'border-rose-800 bg-rose-950/40 text-rose-200';
+                      else cls = 'border-stone-800 bg-stone-950/30 opacity-50';
+                    }
+                    return (
+                      <button key={i} onClick={() => handleAnswer(i)} disabled={revealed} className={`w-full text-left p-3 sm:p-4 rounded-lg border transition-all flex items-start gap-3 ${cls}`}>
+                        <div className={`flex-shrink-0 w-7 h-7 rounded-full border flex items-center justify-center text-xs font-medium ${revealed && isCorrect ? 'border-emerald-600 bg-emerald-900 text-emerald-200' : revealed && isSelected && !isCorrect ? 'border-rose-700 bg-rose-900 text-rose-200' : 'border-stone-700 text-stone-400'}`}>
+                          {revealed && isCorrect ? <Check size={14} /> : revealed && isSelected && !isCorrect ? <X size={14} /> : ['A','B','C','D'][i]}
+                        </div>
+                        <span className="text-sm sm:text-base pt-0.5">{opt}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {revealed && (
+                  <div className="mt-5 p-4 bg-amber-950/20 border-l-2 border-amber-600/60 rounded-r-lg slide-right">
+                    <div className="text-xs uppercase tracking-wider text-amber-500/80 mb-1">Why</div>
+                    <p className="text-sm text-stone-300 leading-relaxed">{currentQ.explain}</p>
+                  </div>
+                )}
+                <div className="flex justify-between items-center mt-6">
+                  <button onClick={prevQuestion} disabled={questionIndex === 0} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                    <ChevronLeft size={16} /> Previous
+                  </button>
+                  {questionIndex === questionOrder.length - 1 && revealed ? (
+                    <div className="flex items-center gap-2 text-amber-400 text-sm">
+                      <Trophy size={16} />
+                      Final score: {score.correct}/{score.total}
+                    </div>
+                  ) : (
+                    <button onClick={nextQuestion} disabled={!revealed || questionIndex === questionOrder.length - 1} className="flex items-center gap-1.5 px-4 py-2 bg-amber-700 hover:bg-amber-600 disabled:opacity-30 disabled:cursor-not-allowed text-stone-50 rounded-md text-sm font-medium transition-colors">
+                      Next <ChevronRight size={16} />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {mode === 'flash' && (
+            <div className="fade-in">
+              <div className="bg-stone-950/60 border border-stone-800 rounded-lg p-4 mb-4 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <div className="text-xs text-stone-500 uppercase tracking-wider">Card</div>
+                  <div className="display-font text-2xl text-amber-400">{flashIndex + 1}<span className="text-stone-600">/{FLASHCARDS.length}</span></div>
+                </div>
+                <button onClick={shuffleFlash} className="flex items-center gap-1.5 px-3 py-2 text-stone-300 hover:text-amber-400 border border-stone-800 hover:border-amber-700 rounded-md text-sm transition-colors">
+                  <Shuffle size={14} /> Shuffle
+                </button>
+              </div>
+              <div key={flashIndex} onClick={() => setFlashFlipped(f => !f)} className="bg-gradient-to-br from-stone-900 to-stone-950 border border-stone-800 rounded-lg p-7 sm:p-12 min-h-[280px] sm:min-h-[340px] flex items-center justify-center cursor-pointer hover:border-amber-700/60 transition-colors scale-in">
+                <div className="text-center max-w-2xl">
+                  {!flashFlipped ? (
+                    <>
+                      <div className="text-xs uppercase tracking-[0.3em] text-amber-500/70 mb-4">Term</div>
+                      <h2 className="display-font text-3xl sm:text-4xl font-medium text-stone-100 mb-4">{currentFlash.term}</h2>
+                      <p className="text-xs text-stone-500 mt-6 italic">tap to reveal</p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-xs uppercase tracking-[0.3em] text-amber-500/70 mb-4">Definition</div>
+                      <p className="text-base sm:text-lg text-stone-200 leading-relaxed">{currentFlash.def}</p>
+                      <p className="text-xs text-stone-500 mt-6 italic">tap to flip back</p>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-between items-center mt-4">
+                <button onClick={() => { setFlashIndex(i => Math.max(0, i-1)); setFlashFlipped(false); }} disabled={flashIndex === 0} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  <ChevronLeft size={16} /> Previous
+                </button>
+                <div className="flex-1 mx-4 h-1 bg-stone-900 rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-amber-700 to-amber-500" style={{ width: `${((flashIndex + 1) / FLASHCARDS.length) * 100}%` }}></div>
+                </div>
+                <button onClick={() => { setFlashIndex(i => Math.min(FLASHCARDS.length-1, i+1)); setFlashFlipped(false); }} disabled={flashIndex === FLASHCARDS.length-1} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  Next <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {mode === 'essay' && currentEssay && (
+            <div className="fade-in">
+              <div className="bg-stone-950/60 border border-stone-800 rounded-lg p-4 mb-4 flex items-center justify-between">
+                <div>
+                  <div className="text-xs text-stone-500 uppercase tracking-wider">Essay</div>
+                  <div className="display-font text-2xl text-amber-400">{essayIndex + 1}<span className="text-stone-600">/{ESSAYS.length}</span></div>
+                </div>
+                <button onClick={() => setRevealedEssay(r => !r)} className="text-xs px-3 py-1.5 border border-stone-800 hover:border-amber-700 rounded-md text-stone-300 hover:text-amber-400 transition-colors">
+                  {revealedEssay ? 'Hide outline' : 'Reveal outline'}
+                </button>
+              </div>
+              <div key={essayIndex} className="bg-stone-950/60 border border-stone-800 rounded-lg p-6 sm:p-8 scale-in">
+                <h2 className="display-font text-xl sm:text-2xl text-stone-100 leading-snug mb-6 italic">{currentEssay.title}</h2>
+                {revealedEssay ? (
+                  <div className="space-y-3 slide-right">
+                    <div className="text-xs uppercase tracking-wider text-amber-500/80 mb-2">Skeleton outline</div>
+                    {currentEssay.points.map((pt, i) => (
+                      <div key={i} className="flex gap-3 items-start">
+                        <div className="flex-shrink-0 w-6 h-6 rounded-full border border-amber-700/50 text-amber-400 text-xs flex items-center justify-center mt-0.5">{i+1}</div>
+                        <p className="text-sm text-stone-300 leading-relaxed pt-0.5">{pt}</p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-6">
+                    <p className="text-stone-500 italic mb-1">Try drafting your own outline first.</p>
+                    <p className="text-stone-600 text-sm">Then reveal to compare.</p>
+                  </div>
+                )}
+              </div>
+              <div className="flex justify-between items-center mt-4">
+                <button onClick={() => { setEssayIndex(i => Math.max(0, i-1)); setRevealedEssay(false); }} disabled={essayIndex === 0} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  <ChevronLeft size={16} /> Previous
+                </button>
+                <button onClick={() => { setEssayIndex(i => Math.min(ESSAYS.length-1, i+1)); setRevealedEssay(false); }} disabled={essayIndex === ESSAYS.length-1} className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors">
+                  Next <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {mode === 'quick' && (
+            <div className="fade-in space-y-6">
+              {QUICK_REFERENCE.map(section => (
+                <div key={section.category} className="bg-stone-950/60 border border-stone-800 rounded-lg p-5 sm:p-7">
+                  <div className="flex items-center gap-2 mb-5">
+                    <div className="h-px flex-1 bg-stone-800"></div>
+                    <h3 className="display-font text-lg italic text-amber-400 px-3">{section.category}</h3>
+                    <div className="h-px flex-1 bg-stone-800"></div>
+                  </div>
+                  <div className="grid sm:grid-cols-2 gap-2 sm:gap-3">
+                    {section.items.map((item, i) => (
+                      <div key={i} className="flex items-start gap-3 p-3 rounded-md border border-stone-800/50 bg-stone-900/30 hover:border-amber-800/50 hover:bg-amber-950/10 transition-colors">
+                        <div className="display-font font-medium text-amber-300 text-base sm:text-lg flex-shrink-0 min-w-[60px]">{item.label}</div>
+                        <p className="text-xs sm:text-sm text-stone-300 pt-1">{item.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <footer className="mt-12 pt-6 border-t border-stone-900 text-center">
+            <p className="text-xs text-stone-600 italic display-font">EHS 515 · Day 1 · Made by Chidinma Nwatu (The Revolutionary Educator)</p>
+          </footer>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+document.getElementById('loading').classList.add('hidden');
+</script>
+</body>
+</html>
